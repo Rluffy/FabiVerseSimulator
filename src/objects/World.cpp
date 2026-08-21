@@ -19,51 +19,61 @@ World::World(int id, std::string name, Date startDate, int length, int width)
 void World::startSimulation()
 {
   prepareSimulation();
-  while (true)
+
+  for (int i = 0; i < 100000; i++)
   {
-
-    // 24 hours
-    for (int i = 0; i < 24; i++)
-    {
-      for (Person &person : persons)
-      {
-        Coordinate cord = person.move(length, width);
-
-        // Only move person when cordinates are free
-        if (objectCoordinates.find(cord) == objectCoordinates.end())
-        {
-          // Update coordinate info
-          objectCoordinates.erase(person.coordinate);
-          person.coordinate = cord;
-          objectCoordinates.insert({cord, person});
-
-          // check for birth, skip when pregnant
-          if (person.gender == Gender::Female && person.pregnant){
-            if ( person.babyBirthDate  >= currentDate){
-              babyBirth(person);
-
-            }
-
-            continue;
-          }
-
-          // check for reproduction
-          Person* repPartner = getReproductionPartner(person);
-          // Only reproduce if found
-          if (repPartner != nullptr)
-          {
-            reproduce(person, *repPartner);
-          }
-        }
-      }
-    }
-
-    this_thread::sleep_for(chrono::microseconds(1));
-    currentDate.nextDay();
+    simulateDay();
   }
+
+  cout << " Personenanzahl: " << persons.size();
 }
 
-Person* World::getReproductionPartner(const Person &person)
+void World::simulateDay()
+{
+  // 24 hours
+  for (int i = 0; i < 24; i++)
+  {
+    for (int p = 0; p < persons.size(); p++)
+    {
+
+      Person &person = persons.at(p);
+      Coordinate cord = person.move(length, width);
+
+      // Only move person when cordinates are free
+      if (objectCoordinates.find(cord) != objectCoordinates.end())
+      {
+        continue;
+      }
+      // Update coordinate info
+      objectCoordinates.erase(person.coordinate);
+      person.coordinate = cord;
+      objectCoordinates.insert({cord, &person});
+
+      // check for birth, skip when female pregnant
+      if (person.gender == Gender::Female && person.pregnant)
+      {
+        if (person.babyBirthDate >= currentDate)
+        {
+          babyBirth(person);
+        }
+
+        continue;
+      }
+
+      // Check for reproduction partner
+      Person *repPartner = getReproductionPartner(person);
+      // Only reproduce if found
+      if (repPartner != nullptr)
+      {
+        reproduce(person, *repPartner);
+      }
+    }
+  }
+
+  this_thread::sleep_for(chrono::microseconds(1));
+  currentDate.nextDay();
+}
+Person *World::getReproductionPartner(const Person &person)
 {
   int xP = person.coordinate.x;
   int yP = person.coordinate.y;
@@ -85,11 +95,31 @@ Person* World::getReproductionPartner(const Person &person)
       // person found
       if (it != objectCoordinates.end())
       {
-        Person &neighbour = it->second;
+        // cout << "Partner found";
+        Person &neighbour = *(it->second);
         if (reproductionPossible(person, neighbour))
         {
+          // cout << "Neighbour";
           return &neighbour;
         }
+      }
+    }
+  }
+  return nullptr;
+}
+
+Coordinate *World::getNextFreePostion()
+{
+  for (int x = 0; x < length; x++)
+  {
+    for (int y = 0; y < width; y++)
+    {
+      Coordinate cord = {x, y};
+      auto it = objectCoordinates.find(cord);
+      // Free postion found
+      if (it == objectCoordinates.end())
+      {
+        return new Coordinate{x, y};
       }
     }
   }
@@ -109,28 +139,47 @@ void World::reproduce(Person &p1, Person &p2)
   {
     p2.pregnant = true;
     p2.pregnancyDate = currentDate;
+    p2.babyBirthDate = currentDate;
     p2.babyBirthDate.addMonths(pregnancyTimeMonths);
   }
 }
 
 bool World::reproductionPossible(const Person &p1, const Person &p2)
 {
-  // Different sex
-  return p1.gender != p2.gender;
+  // Different sex and female not pregnant
+  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
 }
 
-void World::babyBirth(Person &p1){
-  p1.babyBirthDate = {0,0,0};
+void World::babyBirth(Person &p1)
+{
+  Coordinate *birthLocationP = getNextFreePostion();
   p1.pregnant = false;
 
-  cout << "Baby was made on" << p1.pregnancyDate.toDateString() << " and is born on "  << p1.babyBirthDate.toDateString();
+  // Baby only born when free space found
+  if (birthLocationP != nullptr)
+  {
+    Coordinate birthLocation = *birthLocationP;
+    delete birthLocationP;
+    // 1/2 for male or female
+    Gender babyGender = rand() % 2 == 0 ? Gender::Male : Gender::Female;
+    Person baby(++nextPersonId, p1.babyBirthDate, to_string(nextPersonId), babyGender, birthLocation);
+    persons.push_back(baby);
+    objectCoordinates.insert({birthLocation, &baby});
+  }
+  else
+  {
+    cout << "Full";
+  }
 }
 
 void World::prepareSimulation()
 {
-  Person male(0, {1, 1, 1900}, "Bob", Gender::Male, {0, 0});
-  Person female(0, {1, 1, 1900}, "Lara", Gender::Female, {3, 3});
+  Person male(++nextPersonId, {1, 1, 1900}, "Bob", Gender::Male, {0, 0});
+  Person female(++nextPersonId, {1, 1, 1900}, "Lara", Gender::Female, {3, 3});
 
   persons.push_back(male);
   persons.push_back(female);
+
+  objectCoordinates.insert({{0, 0}, &male});
+  objectCoordinates.insert({{3, 3}, &female});
 }
