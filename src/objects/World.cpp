@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <chrono>
+#include <algorithm>
 
 using namespace std;
 
@@ -20,7 +21,7 @@ void World::startSimulation()
 {
   prepareSimulation();
 
-  for (int i = 0; i < 100000; i++)
+  for (int i = 0; i < 3000; i++)
   {
     simulateDay();
   }
@@ -47,12 +48,12 @@ void World::simulateDay()
       // Update coordinate info
       objectCoordinates.erase(person.coordinate);
       person.coordinate = cord;
-      objectCoordinates.insert({cord, &person});
+      objectCoordinates.insert({cord, person.id});
 
       // check for birth, skip when female pregnant
       if (person.gender == Gender::Female && person.pregnant)
       {
-        if (person.babyBirthDate >= currentDate)
+        if (currentDate >= person.babyBirthDate)
         {
           babyBirth(person);
         }
@@ -70,10 +71,10 @@ void World::simulateDay()
     }
   }
 
-  this_thread::sleep_for(chrono::microseconds(1));
+  // this_thread::sleep_for(chrono::microseconds(1));
   currentDate.nextDay();
 }
-Person *World::getReproductionPartner(const Person &person)
+Person* World::getReproductionPartner(const Person &person)
 {
   int xP = person.coordinate.x;
   int yP = person.coordinate.y;
@@ -96,11 +97,18 @@ Person *World::getReproductionPartner(const Person &person)
       if (it != objectCoordinates.end())
       {
         // cout << "Partner found";
-        Person &neighbour = *(it->second);
-        if (reproductionPossible(person, neighbour))
+        int neighbourId = it->second;
+
+        auto neighIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
+                                    { return p.id == id; });
+        if (neighIt != persons.end())
         {
-          // cout << "Neighbour";
-          return &neighbour;
+          Person &neighbour = *neighIt;
+          if (Person::reproductionPossible(person, neighbour))
+          {
+            // cout << "Neighbour";
+            return &neighbour;
+          }
         }
       }
     }
@@ -108,7 +116,7 @@ Person *World::getReproductionPartner(const Person &person)
   return nullptr;
 }
 
-Coordinate *World::getNextFreePostion()
+Coordinate* World::getNextFreePostion()
 {
   for (int x = 0; x < length; x++)
   {
@@ -144,12 +152,6 @@ void World::reproduce(Person &p1, Person &p2)
   }
 }
 
-bool World::reproductionPossible(const Person &p1, const Person &p2)
-{
-  // Different sex and female not pregnant
-  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
-}
-
 void World::babyBirth(Person &p1)
 {
   Coordinate *birthLocationP = getNextFreePostion();
@@ -164,7 +166,7 @@ void World::babyBirth(Person &p1)
     Gender babyGender = rand() % 2 == 0 ? Gender::Male : Gender::Female;
     Person baby(++nextPersonId, p1.babyBirthDate, to_string(nextPersonId), babyGender, birthLocation);
     persons.push_back(baby);
-    objectCoordinates.insert({birthLocation, &baby});
+    objectCoordinates.insert({birthLocation, baby.id});
   }
   else
   {
@@ -180,6 +182,6 @@ void World::prepareSimulation()
   persons.push_back(male);
   persons.push_back(female);
 
-  objectCoordinates.insert({{0, 0}, &male});
-  objectCoordinates.insert({{3, 3}, &female});
+  objectCoordinates.insert({{0, 0}, male.id});
+  objectCoordinates.insert({{3, 3}, female.id});
 }

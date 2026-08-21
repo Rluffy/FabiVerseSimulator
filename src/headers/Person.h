@@ -23,6 +23,9 @@ public:
 
     Person(int id, Date birthdate, string name, Gender gender, Coordinate coordinate);
     Coordinate move(int worldLength, int worldWidth);
+
+    static bool reproductionPossible(const Person &p1, const Person &p2 );
+
   
 
 

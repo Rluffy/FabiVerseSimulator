@@ -30,16 +30,14 @@ public:
      double temperature;
      vector<Person> persons;
 
-     // BUG use references not copies for person
-     map<Coordinate,Person*> objectCoordinates;
+     map<Coordinate,int> objectCoordinates;
      int nextPersonId = 0;
 
 
      World (int id, string name, Date startDate, int length, int width);
      Person* getReproductionPartner(const Person& person);
-     bool reproductionPossible(const Person& p1, const Person& p2 );
-     void reproduce(Person& p1, Person& p2 );
-     void babyBirth(Person& p1);
+     void reproduce(Person &p1, Person &p2 );
+     void babyBirth(Person &p1);
      Coordinate* getNextFreePostion();
 
      void startSimulation();

@@ -16,30 +16,30 @@ Coordinate Person::move(int worldLength, int worldWidth)
 {
     int min = -1;
     int max = 1;
-
     int xCordinate = coordinate.x;
     int yCordinate = coordinate.y;
     Coordinate newCoordinate;
-
     do
     {
-
         int moveDirectionX = rand() % (max - min + 1) + min;
         xCordinate += movementPerHour * moveDirectionX;
         if (xCordinate > worldLength || xCordinate < 0)
         {
             xCordinate -= movementPerHour * moveDirectionX;
         }
-
         int moveDirectionY = rand() % (max - min + 1) + min;
         yCordinate += movementPerHour * moveDirectionY;
         if (yCordinate > worldWidth || yCordinate < 0)
         {
             yCordinate -= movementPerHour * moveDirectionY;
         }
-
         newCoordinate = {xCordinate, yCordinate};
     } while (newCoordinate == coordinate);
-
     return newCoordinate;
+}
+
+bool Person::reproductionPossible(const Person &p1, const Person &p2)
+{
+    // Different sex and female not pregnant
+    return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
 }
