@@ -1,20 +1,9 @@
-#include <iostream>
-#include "headers/World.h"
-#include "headers/Coordinate.h"
+#include "headers/WorldHandler.h"
 
-using namespace std;
-
-int main() {
-World world(
-    1,
-    "FabiVerse",
-    {1, 1, 2026},
-    100,
-    100
-);
-
-world.startSimulation();
-
-
-  
+int main(int argc, char const *argv[])
+{
+    World world (0, "World1", {1,1,2020}, 100, 100,36);
+    WorldHandler wh(world);
+    wh.startSimulation();
+    return 0;
 }

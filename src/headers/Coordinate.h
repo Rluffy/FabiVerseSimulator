@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 struct Coordinate
 {
     int x;

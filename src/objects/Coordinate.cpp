@@ -1,6 +1,6 @@
 #include "../headers/Coordinate.h"
 
-
+using namespace std;
 
 bool Coordinate::operator<(const Coordinate& other) const {
     if (x != other.x)

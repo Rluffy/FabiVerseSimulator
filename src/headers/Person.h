@@ -21,9 +21,7 @@ public:
      Date pregnancyDate;
      int movementPerHour = 1;
 
-    Person(int id, Date birthdate, string name, Gender gender, Coordinate coordinate);
-    Coordinate move(int worldLength, int worldWidth);
-
+    Person(int id, Date birthdate, string name, Gender gender);
     static bool reproductionPossible(const Person &p1, const Person &p2 );
 
   
