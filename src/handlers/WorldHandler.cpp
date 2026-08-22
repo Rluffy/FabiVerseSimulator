@@ -7,7 +7,7 @@ using namespace std;
 
 WorldHandler::WorldHandler(World world)
     : world(world),
-      th(world.currentDate, world.pregnancyTimeMonths),
+      th(world.startDate, world.pregnancyTimeMonths),
       mh(world.length, world.width),
       ph(mh, th)
 {
@@ -17,22 +17,17 @@ void WorldHandler::startSimulation()
 {
   prepareSimulation();
 
-  for (int i = 0; i < 1000; i++)
+  for (int i = 0; i < 300; i++)
   {
     simulateDay();
     th.nextDay(); 
   }
 
-  cout << " Personenanzahl: " << ph.persons.size();
 }
 
 void WorldHandler::simulateDay()
 {
-  // 24 hours
-  for (int i = 0; i < 24; i++)
-  {
     ph.simulatePersons();
-  }
 }
 
 void WorldHandler::prepareSimulation()

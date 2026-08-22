@@ -9,6 +9,7 @@ class PersonHandler{
 
     public:
      vector<Person> persons;
+     vector<Person> babies;
      int nextPersonId = 0;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
@@ -19,7 +20,10 @@ class PersonHandler{
      void babyBirth(Person &p1);
      Person* getReproductionPartner(const Person &p1);
      void reproduce(Person &p1, Person &p2);
-     void setPersonPregnant(Person & p1);
+     void makePersonPregnant(Person & p1);
+     void processBirths();
+     bool reproductionPossible(const Person &p1, const Person &p2);
+
 
 
 

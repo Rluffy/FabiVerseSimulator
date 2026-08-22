@@ -11,7 +11,7 @@ struct Date
     void nextDay();
     void addMonths(int months);
     std::string toDateString();
-    bool operator>=(const Date& other) const;
+    bool operator>=(const Date &other) const;
 
 
 };

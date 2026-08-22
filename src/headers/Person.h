@@ -10,21 +10,18 @@ using namespace std;
 class Person
 {
 public:
-    const int id;
-    const Date birthdate;
-    const string name;
+    int id;
+    Date birthdate;
+    string name;
     Gender gender;
 
-     Coordinate coordinate;
-     bool pregnant;
-     Date babyBirthDate;
-     Date pregnancyDate;
-     int movementPerHour = 1;
+    Coordinate coordinate;
+    bool pregnant;
+    int motherId;
+    int fatherId;
+    Date babyBirthDate;
+    Date pregnancyDate;
+    int movementPerHour = 1;
 
     Person(int id, Date birthdate, string name, Gender gender);
-    static bool reproductionPossible(const Person &p1, const Person &p2 );
-
-  
-
-
 };
