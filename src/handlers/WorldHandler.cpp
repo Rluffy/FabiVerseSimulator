@@ -17,11 +17,13 @@ void WorldHandler::startSimulation()
 {
   prepareSimulation();
 
-  for (int i = 0; i < 500; i++)
+  for (int i = 0; i < 4000; i++)
   {
     simulateDay();
     th.nextDay(); 
   }
+
+  cout << "Person count: " << ph.persons.size() << endl;
 
 }
 

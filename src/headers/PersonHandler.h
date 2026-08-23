@@ -17,7 +17,7 @@ class PersonHandler{
 
      void preparePersons();
      void simulatePersons();
-     void babyBirth(Person p1);
+     void babyBirth(Person &baby);
      Person* getReproductionPartner(const Person &p1);
      void reproduce(Person &p1, Person &p2);
      void makePersonPregnant(Person & p1);
