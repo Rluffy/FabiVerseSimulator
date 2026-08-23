@@ -45,14 +45,16 @@ void PersonHandler::simulatePersons()
 void PersonHandler::babyBirth(Person &baby)
 {
 
-  // cout << "Baby born with Id: " << baby.id 
+  // cout << "Baby born with Id: " << baby.id
   // << " Mother Id: " << baby.motherId << " Father Id: " << baby.fatherId  << " " << timeHandler.currentDate.toDateString() << endl;
   // find mother and set unpregnant
   auto motherIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
                                { return p.id == baby.motherId; });
-  if (motherIt != persons.end())
+
+  Person *motherP = getPersonById(baby.motherId);
+  if (motherP != nullptr)
   {
-    Person &mother = *motherIt;
+    Person &mother = *motherP;
     mother.pregnant = false;
   }
 
@@ -80,15 +82,14 @@ Person *PersonHandler::getReproductionPartner(const Person &person)
   vector<int> neighbIds = mapHandler.getPersonNeighbourIds(person);
   for (int neighbId : neighbIds)
   {
-    auto neighIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
-                                { return p.id == neighbId; });
-    if (neighIt != persons.end())
+    Person *neighbourP = getPersonById(neighbId);
+    if (neighbourP != nullptr)
     {
-      Person &neighbour = *neighIt;
-      if (reproductionPossible(person, neighbour))
+      Person &neighbour = *neighbourP;
+      if (isReproductionPossible(person, neighbour))
       {
         // cout << "Found Reproduction Partner for Person Id: " << person.id << " Partner Id: " << neighbour.id << endl;
-        return &neighbour;
+        return neighbourP;
       }
     }
   }
@@ -131,7 +132,7 @@ void PersonHandler::processBirths()
 {
   // cout << "Babie Size " << babies.size();
   vector<Person> unbornBabies;
-  for (  Person &babie : babies)
+  for (Person &babie : babies)
   {
     bool birthTime = timeHandler.currentDate >= babie.birthdate;
     if (birthTime)
@@ -154,8 +155,49 @@ void PersonHandler::makePersonPregnant(Person &p1)
   p1.babyBirthDate.addMonths(timeHandler.pregnancyTimeMonths);
 }
 
-bool PersonHandler::reproductionPossible(const Person &p1, const Person &p2)
+bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
 {
-  // Different sex and female not pregnant
-  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
+  // Different sex, female not pregnant, not related
+  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant && !isRelated(p1,p2);
+}
+
+bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLevel)
+{
+
+  // Check if persons are parent and kid
+  if (p1.motherId == p2.id || p2.motherId == p1.id)
+    return true;
+  if (p1.fatherId == p2.id || p2.fatherId == p1.id)
+    return true;
+
+  // Check if persons are siblings
+  if (p1.motherId == p2.motherId || p1.fatherId == p2.fatherId)
+    return true;
+ // for example 0 < 1
+  if (curRelLevel < releationLevel)
+  {
+    curRelLevel++;
+    
+    if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.motherId), curRelLevel))
+      return true;
+    if (isRelated(*getPersonById(p1.fatherId), *getPersonById(p2.fatherId), curRelLevel))
+      return true;
+    if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.fatherId), curRelLevel))
+      return true;
+  }
+
+  return false;
+}
+
+Person *PersonHandler::getPersonById(int id)
+{
+  auto personIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
+                               { return p.id == id; });
+
+  if (personIt != persons.end())
+  {
+    // it -> object -> pointer
+    return &*personIt;
+  }
+  return nullptr;
 }

@@ -11,6 +11,7 @@ class PersonHandler{
      vector<Person> persons;
      vector<Person> babies;
      int nextPersonId = 0;
+     int releationLevel = 1;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
      PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler);
@@ -19,14 +20,12 @@ class PersonHandler{
      void simulatePersons();
      void babyBirth(Person &baby);
      Person* getReproductionPartner(const Person &p1);
+     Person* getPersonById(int id);
      void reproduce(Person &p1, Person &p2);
      void makePersonPregnant(Person & p1);
      void processBirths();
-     bool reproductionPossible(const Person &p1, const Person &p2);
-
-
-
-
+     bool isReproductionPossible(const Person &p1, const Person &p2);
+     bool isRelated(const Person &p1, const Person &p2, int relLevel = 0);
 
 
 
