@@ -40,7 +40,7 @@ void PersonHandler::simulatePersons()
 processBirths();
 }
 
-void PersonHandler::babyBirth(Person &baby)
+void PersonHandler::babyBirth(Person baby)
 {
   // find mother and set unpregnant
   auto motherIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
@@ -124,12 +124,13 @@ void PersonHandler::processBirths()
 {
   // cout << "Babie Size " << babies.size();
   vector<Person> unbornBabies;
-  for (Person &babie : babies)
+  for (Person babie : babies)
   {
+     cout << "Birthdate Baby " << babie.birthdate.toDateString() << " Current Date " << timeHandler.currentDate.toDateString() << "\n";
+     bool birthTime = timeHandler.currentDate.isBiggerOrEquals(babie.birthdate);
+     cout << " Result " << birthTime << "\n";
 
-    // cout << "Birthdate Baby " << babie.birthdate.toDateString() << " Current Date " << timeHandler.currentDate.toDateString() << "\n";
-
-    if (timeHandler.currentDate >= babie.birthdate)
+    if (birthTime)
     {
       cout << "Test";
       babyBirth(babie);

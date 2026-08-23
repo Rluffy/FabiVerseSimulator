@@ -17,7 +17,7 @@ void WorldHandler::startSimulation()
 {
   prepareSimulation();
 
-  for (int i = 0; i < 300; i++)
+  for (int i = 0; i < 500; i++)
   {
     simulateDay();
     th.nextDay(); 
