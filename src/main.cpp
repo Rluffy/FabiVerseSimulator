@@ -1,4 +1,5 @@
 #include "headers/WorldHandler.h"
+#include "headers/Logger.h"
 
 int main(int argc, char const *argv[])
 {

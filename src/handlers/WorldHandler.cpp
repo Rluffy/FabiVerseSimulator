@@ -9,7 +9,9 @@ WorldHandler::WorldHandler(World world)
     : world(world),
       th(world.startDate, world.pregnancyTimeMonths),
       mh(world.length, world.width),
-      ph(mh, th)
+      logger("fabiVerseLog", th, true),
+      ph(mh, th, logger)
+
 {
 }
 
@@ -17,13 +19,15 @@ void WorldHandler::startSimulation()
 {
   prepareSimulation();
 
+  logger.log(LogLevel::INFO, "Start simulating");
   for (int i = 0; i < 4000; i++)
   {
     simulateDay();
     th.nextDay(); 
   }
 
-  cout << "Person count: " << ph.persons.size() << endl;
+  logger.log(LogLevel::INFO, "Person count: " + to_string(ph.persons.size()));
+  logger.closeLogFile();
 
 }
 

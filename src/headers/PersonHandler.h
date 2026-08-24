@@ -4,6 +4,7 @@
 #include "Person.h"
 #include "MapHandler.h"
 #include "TimeHandler.h"
+#include "Logger.h"
 
 class PersonHandler{
 
@@ -14,7 +15,8 @@ class PersonHandler{
      int releationLevel = 1;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
-     PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler);
+     Logger &logger;
+     PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger);
 
      void preparePersons();
      void simulatePersons();

@@ -1,15 +1,16 @@
 #include "../headers/PersonHandler.h"
 #include <algorithm>
 
-PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler)
+PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger)
     : mapHandler(mapHandler),
-      timeHandler(timeHandler)
+      timeHandler(timeHandler),
+      logger(logger)
 {
 }
 
 void PersonHandler::preparePersons()
 {
-  cout << "Prepare Persons" << endl;
+  logger.log(LogLevel::INFO, "Prepare Persons");
   Person male(++nextPersonId, {1, 1, 1900}, "Bob", Gender::Male);
   Person female(++nextPersonId, {1, 1, 1900}, "Lara", Gender::Female);
   mapHandler.insertPersonCoordinate(male, {0, 0});
@@ -21,8 +22,6 @@ void PersonHandler::preparePersons()
 
 void PersonHandler::simulatePersons()
 {
-  // cout << "Simulate Persons" << endl;
-  // 24 hours
   for (int i = 0; i < 24; i++)
   {
     for (int p = 0; p < persons.size(); p++)
@@ -44,10 +43,6 @@ void PersonHandler::simulatePersons()
 
 void PersonHandler::babyBirth(Person &baby)
 {
-
-  // cout << "Baby born with Id: " << baby.id
-  // << " Mother Id: " << baby.motherId << " Father Id: " << baby.fatherId  << " " << timeHandler.currentDate.toDateString() << endl;
-  // find mother and set unpregnant
   auto motherIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
                                { return p.id == baby.motherId; });
 
@@ -69,10 +64,12 @@ void PersonHandler::babyBirth(Person &baby)
 
     mapHandler.insertPersonCoordinate(baby, birthLocation);
     persons.push_back(baby);
+
+    logger.log(LogLevel::DEBUG, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId));
   }
   else
   {
-    cout << "Full" << endl;
+    logger.log(LogLevel::WARNING, " Field is full, person count: " + to_string(persons.size()));
   }
 }
 
@@ -88,18 +85,15 @@ Person *PersonHandler::getReproductionPartner(const Person &person)
       Person &neighbour = *neighbourP;
       if (isReproductionPossible(person, neighbour))
       {
-        // cout << "Found Reproduction Partner for Person Id: " << person.id << " Partner Id: " << neighbour.id << endl;
         return neighbourP;
       }
     }
   }
-  // cout << "No Reproduction Partner found for Person Id: " << person.id << endl;
   return nullptr;
 }
 
 void PersonHandler::reproduce(Person &p1, Person &p2)
 {
-  // cout << "Reproduce Person Id: " << p1.id << " with Person Id: " << p2.id << endl;
   Date birthDate;
   int fatherId;
   int motherId;
@@ -126,11 +120,14 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
   baby.fatherId = fatherId;
   baby.motherId = motherId;
   babies.push_back(baby);
+
+  logger.log(LogLevel::DEBUG, "Unborn baby created, id: " + to_string(baby.id) + " birthdate: " + birthDate.toDateString() +
+                                  " mother id: " +
+                                  to_string(motherId) + " father id: " + to_string(fatherId));
 }
 
 void PersonHandler::processBirths()
 {
-  // cout << "Babie Size " << babies.size();
   vector<Person> unbornBabies;
   for (Person &babie : babies)
   {
@@ -158,33 +155,33 @@ void PersonHandler::makePersonPregnant(Person &p1)
 bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
 {
   // Different sex, female not pregnant, not related
-  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant && !isRelated(p1,p2);
+  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant && !isRelated(p1, p2);
 }
 
 bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLevel)
 {
 
-  // Check if persons are parent and kid
-  if (p1.motherId == p2.id || p2.motherId == p1.id)
-    return true;
-  if (p1.fatherId == p2.id || p2.fatherId == p1.id)
-    return true;
+  // // Check if persons are parent and kid
+  // if (p1.motherId == p2.id || p2.motherId == p1.id)
+  //   return true;
+  // if (p1.fatherId == p2.id || p2.fatherId == p1.id)
+  //   return true;
 
-  // Check if persons are siblings
-  if (p1.motherId == p2.motherId || p1.fatherId == p2.fatherId)
-    return true;
- // for example 0 < 1
-  if (curRelLevel < releationLevel)
-  {
-    curRelLevel++;
-    
-    if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.motherId), curRelLevel))
-      return true;
-    if (isRelated(*getPersonById(p1.fatherId), *getPersonById(p2.fatherId), curRelLevel))
-      return true;
-    if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.fatherId), curRelLevel))
-      return true;
-  }
+  // // Check if persons are siblings
+  // if (p1.motherId == p2.motherId || p1.fatherId == p2.fatherId)
+  //   return true;
+  // // for example 0 < 1
+  // if (curRelLevel < releationLevel)
+  // {
+  //   curRelLevel++;
+
+  //   if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.motherId), curRelLevel))
+  //     return true;
+  //   if (isRelated(*getPersonById(p1.fatherId), *getPersonById(p2.fatherId), curRelLevel))
+  //     return true;
+  //   if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.fatherId), curRelLevel))
+  //     return true;
+  // }
 
   return false;
 }
