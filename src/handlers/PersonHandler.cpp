@@ -32,7 +32,7 @@ void PersonHandler::simulatePersons()
       // Check for reproduction partner
       Person *repPartner = getReproductionPartner(person);
       // Only reproduce if found
-      if (repPartner != nullptr)
+      if (repPartner)
       {
         reproduce(person, *repPartner);
       }
@@ -47,7 +47,7 @@ void PersonHandler::babyBirth(Person &baby)
                                { return p.id == baby.motherId; });
 
   Person *motherP = getPersonById(baby.motherId);
-  if (motherP != nullptr)
+  if (motherP)
   {
     Person &mother = *motherP;
     mother.pregnant = false;
@@ -57,7 +57,7 @@ void PersonHandler::babyBirth(Person &baby)
   Coordinate *birthLocationP = mapHandler.getNextFreePostion();
 
   // Baby only born when free space found
-  if (birthLocationP != nullptr)
+  if (birthLocationP)
   {
     Coordinate birthLocation = *birthLocationP;
     delete birthLocationP;
@@ -80,7 +80,7 @@ Person *PersonHandler::getReproductionPartner(const Person &person)
   for (int neighbId : neighbIds)
   {
     Person *neighbourP = getPersonById(neighbId);
-    if (neighbourP != nullptr)
+    if (neighbourP)
     {
       Person &neighbour = *neighbourP;
       if (isReproductionPossible(person, neighbour))
@@ -161,27 +161,46 @@ bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
 bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLevel)
 {
 
-  // // Check if persons are parent and kid
-  // if (p1.motherId == p2.id || p2.motherId == p1.id)
-  //   return true;
-  // if (p1.fatherId == p2.id || p2.fatherId == p1.id)
-  //   return true;
+  // Check if persons are parent and kid (checks should be valid event if no parents)
+  if (p1.motherId == p2.id || p2.motherId == p1.id)
+    return true;
+  if (p1.fatherId == p2.id || p2.fatherId == p1.id)
+    return true;
 
-  // // Check if persons are siblings
-  // if (p1.motherId == p2.motherId || p1.fatherId == p2.fatherId)
-  //   return true;
-  // // for example 0 < 1
-  // if (curRelLevel < releationLevel)
-  // {
-  //   curRelLevel++;
+  // skip parent checks when no parents
+  if (!(p1.motherId == -1 || p1.fatherId == -1 || p2.motherId == -1 || p2.fatherId == -1))
+  {
+    // Check if persons are siblings
+    if (p1.motherId == p2.motherId || p1.fatherId == p2.fatherId)
+      return true;
+  }
+  else
+  {
+    logger.log(LogLevel::INFO, "Skipped parents relation check Person id : " + to_string(p1.id) + " (Mother id: " + to_string(p1.motherId) + " Father id: " + to_string(p1.fatherId) + ")" + " Person id : " + to_string(p2.id) + " (Mother id: " + to_string(p2.motherId) + " Father id: " + to_string(p2.fatherId) + ")");
+  }
 
-  //   if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.motherId), curRelLevel))
-  //     return true;
-  //   if (isRelated(*getPersonById(p1.fatherId), *getPersonById(p2.fatherId), curRelLevel))
-  //     return true;
-  //   if (isRelated(*getPersonById(p1.motherId), *getPersonById(p2.fatherId), curRelLevel))
-  //     return true;
-  // }
+  // for example 0 < 1
+  if (curRelLevel < releationLevel)
+  {
+    curRelLevel++;
+
+    Person *m1 = getPersonById(p1.motherId);
+    Person *f1 = getPersonById(p1.fatherId);
+    Person *m2 = getPersonById(p2.motherId);
+    Person *f2 = getPersonById(p2.fatherId);
+
+    if (m1 && isRelated(*m1, p2, curRelLevel))
+      return true;
+
+    if (f1 && isRelated(*f1, p2, curRelLevel))
+      return true;
+
+    if (m2 && isRelated(*m2, p1, curRelLevel))
+      return true;
+
+    if (f2 && isRelated(*f2, p1, curRelLevel))
+      return true;
+  }
 
   return false;
 }
