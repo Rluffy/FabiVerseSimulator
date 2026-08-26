@@ -29,20 +29,28 @@ void isRelatedTest()
     Person opa2(++nextPersonId, {1,1,1934}, "Opa2", Gender::Male); // 4
     Person mama(++nextPersonId, {1, 1, 2006}, "mama", Gender::Female); // 5
     Person papa(++nextPersonId, {1, 1, 2006}, "papa", Gender::Male); // 6
+    Person sandra(++nextPersonId, {1, 1, 2003}, "sandra", Gender::Female); // 7
+    Person robert(++nextPersonId, {1, 1, 2006}, "robert", Gender::Male); // 8
     Person fabian(++nextPersonId, {1, 1, 2003}, "fabian", Gender::Male); // 7
     Person hannah(++nextPersonId, {1, 1, 2006}, "hannah", Gender::Female); // 8
     Person ingrid(++nextPersonId, {1, 1, 2006}, "ingrid", Gender::Female); // 9
+    Person dario(++nextPersonId, {1, 1, 2006}, "dario", Gender::Male); // 9
+
 
     mama.motherId = oma.id;
     mama.fatherId = opa.id;
     papa.motherId = oma2.id;
     papa.fatherId = opa2.id;
+    robert.motherId = oma.id;
+    robert.fatherId = opa.id;
 
     fabian.motherId = mama.id;
     hannah.motherId = mama.id;
     fabian.fatherId = papa.id;
     hannah.fatherId = papa.id;
-    
+
+    dario.fatherId = robert.id;
+    dario.motherId = sandra.id;    
     
     // check grand parents
   
@@ -55,18 +63,24 @@ void isRelatedTest()
     persons.push_back(opa2);
     persons.push_back(mama);
     persons.push_back(papa);
+    persons.push_back(robert);
+    persons.push_back(dario);
 
     ph.persons = persons;
     
     ph.releationLevel = 1;
-    cout << fabian.name << " is related with " << hannah.name << (ph.isRelated(fabian,hannah) ? " Passed " : " Not Passed") << endl;
-    cout << hannah.name << " is related with " << papa.name << (ph.isRelated(hannah,papa) ? " Passed " : " Not Passed") << endl;
-    cout << fabian.name << " is not related with " << ingrid.name << (ph.isRelated(fabian,ingrid) ? " Not Passed " : " Passed") << endl;
+    cout << fabian.name << " is related with " << hannah.name << (ph.isRelated(fabian,hannah) ? " [Passed] " : " [Not Passed]") << endl;
+    cout << hannah.name << " is related with " << papa.name << (ph.isRelated(hannah,papa) ? " [Passed] " : " [Not Passed]") << endl;
+    cout << fabian.name << " is not related with " << ingrid.name << (ph.isRelated(fabian,ingrid) ? " [Not Passed] " : " [Passed]") << endl;
 
    
-    cout << fabian.name << " is related with " << oma.name << (ph.isRelated(fabian,oma) ? " Passed " : " Not Passed") << endl;
-    cout << fabian.name << " is related with " << opa2.name << (ph.isRelated(fabian,opa2) ? " Passed " : " Not Passed") << endl;
-    cout << opa.name << " is not related with " << papa.name << (ph.isRelated(opa,papa) ? " Not Passed " : " Passed") << endl;
+    cout << fabian.name << " is related with " << oma.name << (ph.isRelated(fabian,oma) ? " [Passed] " : " [Not Passed]") << endl;
+    cout << fabian.name << " is related with " << opa2.name << (ph.isRelated(fabian,opa2) ? " [Passed] " : " [Not Passed]") << endl;
+    cout << opa.name << " is not related with " << papa.name << (ph.isRelated(opa,papa) ? " [Not Passed] " : " [Passed]") << endl;
+    cout << robert.name << " is related with " << hannah.name << (ph.isRelated(robert,hannah) ? " [Passed] " : " [Not Passed]") << endl;
+    cout << dario.name << " is related with " << hannah.name << (ph.isRelated(dario,hannah) ? " [Passed] " : " [Not Passed]") << endl;
+
+
 
 
 

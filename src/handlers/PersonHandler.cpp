@@ -11,13 +11,18 @@ PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, L
 void PersonHandler::preparePersons()
 {
   logger.log(LogLevel::INFO, "Prepare Persons");
-  Person male(++nextPersonId, {1, 1, 1900}, "Bob", Gender::Male);
-  Person female(++nextPersonId, {1, 1, 1900}, "Lara", Gender::Female);
-  mapHandler.insertPersonCoordinate(male, {0, 0});
-  mapHandler.insertPersonCoordinate(female, {1, 10});
 
-  persons.push_back(male);
-  persons.push_back(female);
+  for (int i = 0; i < startPersonCount; i++)
+  {
+    nextPersonId++;
+    Person p(nextPersonId, {1, 1, 1900}, to_string(nextPersonId), getRandomGender());
+    Coordinate *cord = mapHandler.getNextFreePostion();
+    if (cord)
+    {
+      insertPerson(p, *cord);
+      logger.log(LogLevel::INFO, "Added " + p.toString());
+    }
+  }
 }
 
 void PersonHandler::simulatePersons()
@@ -41,6 +46,12 @@ void PersonHandler::simulatePersons()
   processBirths();
 }
 
+void PersonHandler::insertPerson(Person &p1, Coordinate cord)
+{
+  mapHandler.insertPersonCoordinate(p1, cord);
+  persons.push_back(p1);
+}
+
 void PersonHandler::babyBirth(Person &baby)
 {
   auto motherIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
@@ -62,9 +73,7 @@ void PersonHandler::babyBirth(Person &baby)
     Coordinate birthLocation = *birthLocationP;
     delete birthLocationP;
 
-    mapHandler.insertPersonCoordinate(baby, birthLocation);
-    persons.push_back(baby);
-
+    insertPerson(baby, birthLocation);
     logger.log(LogLevel::DEBUG, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId));
   }
   else
@@ -115,7 +124,7 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
 
   // create baby
   // 1/2 for male or female
-  Gender babyGender = rand() % 2 == 0 ? Gender::Male : Gender::Female;
+  Gender babyGender = getRandomGender();
   Person baby(++nextPersonId, birthDate, to_string(nextPersonId), babyGender);
   baby.fatherId = fatherId;
   baby.motherId = motherId;
@@ -155,7 +164,18 @@ void PersonHandler::makePersonPregnant(Person &p1)
 bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
 {
   // Different sex, female not pregnant, not related
-  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant && !isRelated(p1, p2);
+  if (isRelated(p1, p2))
+  {
+    logger.log(LogLevel::DEBUG, p1.toString() + " is releated to " + p2.toString());
+    return false;
+  }
+
+  if (!isAdult(p1) || !isAdult(p2)){
+    logger.log(LogLevel::DEBUG, p1.toString() + " or " + p2.toString() + " not adult");
+    return false;
+
+  }
+    return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
 }
 
 bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLevel)
@@ -176,7 +196,7 @@ bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLeve
   }
   else
   {
-    logger.log(LogLevel::INFO, "Skipped parents relation check Person id : " + to_string(p1.id) + " (Mother id: " + to_string(p1.motherId) + " Father id: " + to_string(p1.fatherId) + ")" + " Person id : " + to_string(p2.id) + " (Mother id: " + to_string(p2.motherId) + " Father id: " + to_string(p2.fatherId) + ")");
+    logger.log(LogLevel::DEBUG, "Skipped parents relation check Person id : " + to_string(p1.id) + " (Mother id: " + to_string(p1.motherId) + " Father id: " + to_string(p1.fatherId) + ")" + " Person id : " + to_string(p2.id) + " (Mother id: " + to_string(p2.motherId) + " Father id: " + to_string(p2.fatherId) + ")");
   }
 
   // for example 0 < 1
@@ -216,4 +236,22 @@ Person *PersonHandler::getPersonById(int id)
     return &*personIt;
   }
   return nullptr;
+}
+
+Gender PersonHandler::getRandomGender()
+{
+  // 1 / 2 for male femal
+  return rand() % 2 == 0 ? Gender::Male : Gender::Female;
+}
+
+bool PersonHandler::isAdult(const Person &p1){
+  Date adultDate = p1.birthdate;
+  adultDate.addYears(adultAge);
+
+  if ( timeHandler.currentDate >= adultDate ){
+    return true;
+  }
+
+  return false;
+
 }

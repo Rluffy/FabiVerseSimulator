@@ -24,4 +24,5 @@ public:
     int movementPerHour = 1;
 
     Person(int id, Date birthdate, string name, Gender gender);
+     string toString() const;
 };

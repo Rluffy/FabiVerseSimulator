@@ -10,7 +10,8 @@ struct Date
 
     void nextDay();
     void addMonths(int months);
-    std::string toDateString();
+    void addYears(int years);
+    std::string toDateString() const;
 
     bool isBiggerOrEquals(Date &other);
     bool operator>=(const Date &other) const;

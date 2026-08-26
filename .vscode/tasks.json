@@ -9,6 +9,8 @@
                 "-g",
                 "${workspaceFolder}/src/*.cpp",
                 "${workspaceFolder}/src/objects/*.cpp",
+                "${workspaceFolder}/src/handlers/*.cpp",
+                "${workspaceFolder}/src/monitors/*.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

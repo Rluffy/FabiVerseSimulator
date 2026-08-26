@@ -12,22 +12,27 @@ class PersonHandler{
      vector<Person> persons;
      vector<Person> babies;
      int nextPersonId = 0;
-     int releationLevel = 1;
+     const int releationLevel = 0;
+     const int startPersonCount = 5;
+     const int adultAge = 18;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
      Logger &logger;
      PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger);
-
+ 
+     void insertPerson(Person &p1, Coordinate cord);
      void preparePersons();
      void simulatePersons();
      void babyBirth(Person &baby);
      Person* getReproductionPartner(const Person &p1);
      Person* getPersonById(int id);
+     Gender getRandomGender();
      void reproduce(Person &p1, Person &p2);
      void makePersonPregnant(Person & p1);
      void processBirths();
      bool isReproductionPossible(const Person &p1, const Person &p2);
      bool isRelated(const Person &p1, const Person &p2, int relLevel = 0);
+     bool isAdult(const Person &p1);
 
 
 

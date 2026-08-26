@@ -76,6 +76,10 @@ void Date::addMonths(int months)
         day = maxDay;
 }
 
+void Date::addYears(int years){
+    year+=years;
+}
+
 bool Date::isBiggerOrEquals(Date &other)
 {
     // cout << "Other Date " << other.toDateString() << "\n";
@@ -106,7 +110,7 @@ bool Date::operator>=(const Date &other) const
     return day >= other.day;
 }
 
-string Date::toDateString()
+ string Date::toDateString() const
 {
     std::ostringstream oss;
 

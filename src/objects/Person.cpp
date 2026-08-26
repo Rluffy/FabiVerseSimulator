@@ -14,5 +14,11 @@ Person::Person(int id, Date birthdate, string name, Gender gender)
       pregnancyDate{0, 0, 0}
 
 {
-
+}
+string Person::toString() const
+{
+  return "Person id: " + to_string(this->id) +
+         " Birthdate: " + this->birthdate.toDateString() +
+         " Gender: " + (this->gender == Gender::Male ? " M " : " F ") +
+         " Name: " + this->name;
 }

@@ -20,13 +20,15 @@ void WorldHandler::startSimulation()
   prepareSimulation();
 
   logger.log(LogLevel::INFO, "Start simulating");
-  for (int i = 0; i < 4000; i++)
+  cout << "Starting" << endl;
+  for (int i = 0; i < 3000; i++)
   {
     simulateDay();
     th.nextDay(); 
   }
 
   logger.log(LogLevel::INFO, "Person count: " + to_string(ph.persons.size()));
+  cout << "Finished" << endl;
   logger.closeLogFile();
 
 }
