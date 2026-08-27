@@ -11,6 +11,7 @@
                 "${workspaceFolder}/src/objects/*.cpp",
                 "${workspaceFolder}/src/handlers/*.cpp",
                 "${workspaceFolder}/src/monitors/*.cpp",
+                "${workspaceFolder}/src/pugixml/*.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

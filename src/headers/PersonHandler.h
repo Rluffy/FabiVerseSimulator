@@ -12,7 +12,7 @@ class PersonHandler{
      vector<Person> persons;
      vector<Person> babies;
      int nextPersonId = 0;
-     const int releationLevel = 0;
+     int releationLevel = 0;
      const int startPersonCount = 5;
      const int adultAge = 18;
      MapHandler &mapHandler;
