@@ -8,6 +8,7 @@ Person::Person(int id, Date birthdate, string name, Gender gender)
       gender(gender),
       coordinate{0, 0},
       pregnant(false),
+      murder(false),
       motherId(-1),
       fatherId(-1),
       babyBirthDate{0, 0, 0},

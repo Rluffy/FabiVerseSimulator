@@ -17,6 +17,10 @@ public:
 
     Coordinate coordinate;
     bool pregnant;
+    bool murder;
+    bool dead;
+
+    
     int motherId;
     int fatherId;
     Date babyBirthDate;

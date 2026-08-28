@@ -15,7 +15,7 @@ public:
    void movePerson(Person &p);
    void updatePersonCoordinate(Person &p, Coordinate newCoord);
    void insertPersonCoordinate(Person &p, Coordinate newCoord);
-
+   void removePersonCoordinate(const Person &p);
    Coordinate* getNextFreePostion();
    Person* getFirstNeighbour(const Person &person);
    vector<int> getPersonNeighbourIds(const Person &person);

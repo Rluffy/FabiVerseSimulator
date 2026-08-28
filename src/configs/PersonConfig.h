@@ -9,4 +9,6 @@ struct PersonConfig
     int adultAgeYears;
     // Probability in % for male, else female
     int maleProbability;
+    // Probability in % for murder, else no murder
+    int murderProbability;
 };

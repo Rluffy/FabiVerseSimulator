@@ -36,6 +36,7 @@ Config loadConfigs()
     persConf.relLevel = personNode.child("relLevel").text().as_int();
     persConf.adultAgeYears = personNode.child("adultAgeYears").text().as_int();
     persConf.maleProbability = personNode.child("maleProbability").text().as_int();
+    persConf.murderProbability = personNode.child("murderProbability").text().as_int();
 
     // Time config
     auto timeNode = confNode.child("time");
@@ -67,7 +68,6 @@ Config loadConfigs()
 
     return conf;
 }
-
 int main(int argc, char const *argv[])
 {
 

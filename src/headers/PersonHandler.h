@@ -24,14 +24,21 @@ class PersonHandler{
      void simulatePersons();
      void babyBirth(Person &baby);
      Person* getReproductionPartner(const Person &p1);
+     Person* getVictim(const Person &p1);
      Person* getPersonById(int id);
+     std::vector<Person>::iterator getPersonItById(int id);
+     std::vector<Person>::iterator getUnbornBabyItByMotherId(int id);
      Gender getRandomGender();
      void reproduce(Person &p1, Person &p2);
      void makePersonPregnant(Person & p1);
      void processBirths();
+     void processDeads();
      bool isReproductionPossible(const Person &p1, const Person &p2);
      bool isRelated(const Person &p1, const Person &p2, int relLevel = 0);
      bool isAdult(const Person &p1);
+     bool isMurder(const Person &p1);
+     bool getRandomMurderPersonality();
+     void killPerson(const Person &murder, Person &victim);
 
 
 

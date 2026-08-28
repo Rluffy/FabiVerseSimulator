@@ -33,7 +33,23 @@ void PersonHandler::simulatePersons()
     for (int p = 0; p < persons.size(); p++)
     {
       Person &person = persons.at(p);
+
+      // skip if persons alread set dead
+      if (person.dead)
+      {
+        continue;
+      }
       mapHandler.movePerson(person);
+
+      // murders only kill not reproduce 
+      if (isMurder(person))
+      {
+        Person *victimP = getVictim(person);
+        if (victimP)
+        {
+          killPerson(person, *victimP);
+        }
+      }
 
       // Check for reproduction partner
       Person *repPartner = getReproductionPartner(person);
@@ -44,6 +60,7 @@ void PersonHandler::simulatePersons()
       }
     }
   }
+  processDeads();
   processBirths();
 }
 
@@ -55,9 +72,6 @@ void PersonHandler::insertPerson(Person &p1, Coordinate cord)
 
 void PersonHandler::babyBirth(Person &baby)
 {
-  auto motherIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
-                               { return p.id == baby.motherId; });
-
   Person *motherP = getPersonById(baby.motherId);
   if (motherP)
   {
@@ -73,9 +87,17 @@ void PersonHandler::babyBirth(Person &baby)
   {
     Coordinate birthLocation = *birthLocationP;
     delete birthLocationP;
+    string babyMurderText = "";
+
+    // baby become a murder in future
+    if (getRandomMurderPersonality())
+    {
+      babyMurderText = " will become a murder";
+      baby.murder = true; 
+    }
 
     insertPerson(baby, birthLocation);
-    logger.log(LogLevel::INFO, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId));
+    logger.log(LogLevel::INFO, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId) + babyMurderText);
   }
   else
   {
@@ -97,6 +119,21 @@ Person *PersonHandler::getReproductionPartner(const Person &person)
       {
         return neighbourP;
       }
+    }
+  }
+  return nullptr;
+}
+
+Person *PersonHandler::getVictim(const Person &person)
+{
+  // cout << "Get Reproduction Partner for Person Id: " << person.id << endl;
+  vector<int> victimIds = mapHandler.getPersonNeighbourIds(person);
+  for (int victimId : victimIds)
+  {
+    Person *victimP = getPersonById(victimId);
+    if (victimP)
+    {
+      return victimP;
     }
   }
   return nullptr;
@@ -132,8 +169,8 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
   babies.push_back(baby);
 
   logger.log(LogLevel::INFO, "Unborn baby created, id: " + to_string(baby.id) + " birthdate: " + birthDate.toDateString() +
-                                  " mother id: " +
-                                  to_string(motherId) + " father id: " + to_string(fatherId));
+                                 " mother id: " +
+                                 to_string(motherId) + " father id: " + to_string(fatherId));
 }
 
 void PersonHandler::processBirths()
@@ -153,6 +190,20 @@ void PersonHandler::processBirths()
   }
   babies = unbornBabies;
 }
+
+void PersonHandler::processDeads()
+{
+ vector<Person> undeadPersons;
+  for (Person &person : persons)
+  {
+    if(!person.dead){
+      undeadPersons.push_back(person);
+    }
+  }
+
+  persons = undeadPersons;
+}
+
 void PersonHandler::makePersonPregnant(Person &p1)
 {
   // cout << "Make Person Id: " << p1.id << " Pregnant" << endl;
@@ -164,6 +215,7 @@ void PersonHandler::makePersonPregnant(Person &p1)
 
 bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
 {
+
   // Different sex, female not pregnant, not related
   if (isRelated(p1, p2))
   {
@@ -171,12 +223,12 @@ bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
     return false;
   }
 
-  if (!isAdult(p1) || !isAdult(p2)){
+  if (!isAdult(p1) || !isAdult(p2))
+  {
     logger.log(LogLevel::DEBUG, p1.toString() + " or " + p2.toString() + " not adult");
     return false;
-
   }
-    return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
+  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
 }
 
 bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLevel)
@@ -239,20 +291,71 @@ Person *PersonHandler::getPersonById(int id)
   return nullptr;
 }
 
+vector<Person>::iterator PersonHandler::getPersonItById(int id)
+{
+  auto personIt = std::find_if(persons.begin(), persons.end(), [&](const Person &p)
+                               { return p.id == id; });
+
+  return personIt;
+}
+
+vector<Person>::iterator PersonHandler::getUnbornBabyItByMotherId(int motherId)
+{
+  auto babyIt = std::find_if(babies.begin(), babies.end(), [&](const Person &p)
+                             { return p.motherId == motherId; });
+
+  return babyIt;
+}
+
 Gender PersonHandler::getRandomGender()
 {
   // probabitly in % to be a male
-  return (rand() %  100 + 1) <= conf.maleProbability ? Gender::Male : Gender::Female;
+  return (rand() % 100 + 1) <= conf.maleProbability ? Gender::Male : Gender::Female;
 }
 
-bool PersonHandler::isAdult(const Person &p1){
+bool PersonHandler::isAdult(const Person &p1)
+{
   Date adultDate = p1.birthdate;
   adultDate.addYears(conf.adultAgeYears);
 
-  if ( timeHandler.currentDate >= adultDate ){
+  if (timeHandler.currentDate >= adultDate)
+  {
     return true;
   }
 
   return false;
+}
 
+bool PersonHandler::getRandomMurderPersonality()
+{
+  // probabitly in % to be a murder in future
+  return (rand() % 100 + 1) <= conf.murderProbability;
+}
+
+bool PersonHandler::isMurder(const Person &p1)
+{
+  // person is only murder when he is adult
+  return p1.murder && isAdult(p1);
+}
+
+void PersonHandler::killPerson(const Person &murder, Person &victim)
+{
+  string babyVictimText = "";
+
+    if (victim.pregnant)
+    {
+      // also baby will die
+      auto babyIt = getUnbornBabyItByMotherId(victim.id);
+      if (babyIt != babies.end())
+      {
+        babyVictimText = " Unborn Baby, id " + to_string(babyIt->id) + " also killed";
+        babies.erase(babyIt);
+      }
+    }
+
+    logger.log(LogLevel::INFO, "Murder, id: " + to_string(murder.id) + " killed victim id: " +
+                                   to_string(victim.id) + babyVictimText);
+    // set person dead with it
+    victim.dead = true;
+    mapHandler.removePersonCoordinate(victim);
 }

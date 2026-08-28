@@ -76,6 +76,11 @@ void MapHandler::insertPersonCoordinate(Person &p, Coordinate newCoord)
   p.coordinate = newCoord;
 }
 
+void MapHandler::removePersonCoordinate(const Person &p)
+{
+  objectCoordinates.erase(p.coordinate);
+}
+
 vector<int> MapHandler::getPersonNeighbourIds(const Person &person)
 {
   vector<int> neighbIds;
