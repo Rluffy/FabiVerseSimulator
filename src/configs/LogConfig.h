@@ -1,9 +1,11 @@
 #pragma once
-#include <string>
 
+#include <string>
 struct LogConfig
 {
     std::string file;
     std::string path;
+    int minLogLevel;
+    bool rewrite;
 };
 

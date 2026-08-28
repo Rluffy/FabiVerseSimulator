@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <cstdlib>
 #include "TimeHandler.h"
+#include "../configs/LogConfig.h"
 
 enum LogLevel{
     DEBUG,
@@ -17,13 +18,14 @@ enum LogLevel{
 
 class Logger {
 public:
-  Logger(std::string filename, TimeHandler &timeHandler, bool rewrite = false);
+  Logger(LogConfig conf, TimeHandler &timeHandler);
   void log(LogLevel logLevel, std::string message);
   void closeLogFile();
  
   private:
   std::ofstream logFile;
-  std::filesystem::path path = std::filesystem::path(std::getenv("HOME")) / "logs";
+  LogConfig conf;
+  //std::filesystem::path path = std::filesystem::path(std::getenv("HOME")) / "logs";
   TimeHandler &timeHandler;
 };
 

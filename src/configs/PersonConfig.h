@@ -7,4 +7,6 @@ struct PersonConfig
     int pregTimeMonths;
     int relLevel;
     int adultAgeYears;
+    // Probability in % for male, else female
+    int maleProbability;
 };

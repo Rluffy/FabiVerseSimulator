@@ -1,10 +1,11 @@
 #include "../headers/PersonHandler.h"
 #include <algorithm>
 
-PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger)
+PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, PersonConfig conf)
     : mapHandler(mapHandler),
       timeHandler(timeHandler),
-      logger(logger)
+      logger(logger),
+      conf(conf)
 {
 }
 
@@ -12,7 +13,7 @@ void PersonHandler::preparePersons()
 {
   logger.log(LogLevel::INFO, "Prepare Persons");
 
-  for (int i = 0; i < startPersonCount; i++)
+  for (int i = 0; i < conf.startPersonCount; i++)
   {
     nextPersonId++;
     Person p(nextPersonId, {1, 1, 1900}, to_string(nextPersonId), getRandomGender());
@@ -20,7 +21,7 @@ void PersonHandler::preparePersons()
     if (cord)
     {
       insertPerson(p, *cord);
-      logger.log(LogLevel::INFO, "Added " + p.toString());
+      logger.log(LogLevel::DEBUG, "Added " + p.toString());
     }
   }
 }
@@ -74,7 +75,7 @@ void PersonHandler::babyBirth(Person &baby)
     delete birthLocationP;
 
     insertPerson(baby, birthLocation);
-    logger.log(LogLevel::DEBUG, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId));
+    logger.log(LogLevel::INFO, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId));
   }
   else
   {
@@ -130,7 +131,7 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
   baby.motherId = motherId;
   babies.push_back(baby);
 
-  logger.log(LogLevel::DEBUG, "Unborn baby created, id: " + to_string(baby.id) + " birthdate: " + birthDate.toDateString() +
+  logger.log(LogLevel::INFO, "Unborn baby created, id: " + to_string(baby.id) + " birthdate: " + birthDate.toDateString() +
                                   " mother id: " +
                                   to_string(motherId) + " father id: " + to_string(fatherId));
 }
@@ -158,7 +159,7 @@ void PersonHandler::makePersonPregnant(Person &p1)
   p1.pregnant = true;
   p1.pregnancyDate = timeHandler.currentDate;
   p1.babyBirthDate = timeHandler.currentDate;
-  p1.babyBirthDate.addMonths(timeHandler.pregnancyTimeMonths);
+  p1.babyBirthDate.addMonths(conf.pregTimeMonths);
 }
 
 bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
@@ -200,7 +201,7 @@ bool PersonHandler::isRelated(const Person &p1, const Person &p2, int curRelLeve
   }
 
   // for example 0 < 1
-  if (curRelLevel < releationLevel)
+  if (curRelLevel < conf.relLevel)
   {
     curRelLevel++;
 
@@ -240,13 +241,13 @@ Person *PersonHandler::getPersonById(int id)
 
 Gender PersonHandler::getRandomGender()
 {
-  // 1 / 2 for male femal
-  return rand() % 2 == 0 ? Gender::Male : Gender::Female;
+  // probabitly in % to be a male
+  return (rand() %  100 + 1) <= conf.maleProbability ? Gender::Male : Gender::Female;
 }
 
 bool PersonHandler::isAdult(const Person &p1){
   Date adultDate = p1.birthdate;
-  adultDate.addYears(adultAge);
+  adultDate.addYears(conf.adultAgeYears);
 
   if ( timeHandler.currentDate >= adultDate ){
     return true;

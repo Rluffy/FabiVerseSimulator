@@ -4,6 +4,7 @@
 #include "Person.h"
 #include "MapHandler.h"
 #include "TimeHandler.h"
+#include "../configs/PersonConfig.h"
 #include "Logger.h"
 
 class PersonHandler{
@@ -12,13 +13,11 @@ class PersonHandler{
      vector<Person> persons;
      vector<Person> babies;
      int nextPersonId = 0;
-     int releationLevel = 0;
-     const int startPersonCount = 5;
-     const int adultAge = 18;
+     PersonConfig conf;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
      Logger &logger;
-     PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger);
+     PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, PersonConfig conf);
  
      void insertPerson(Person &p1, Coordinate cord);
      void preparePersons();

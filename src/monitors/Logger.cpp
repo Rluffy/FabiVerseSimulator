@@ -2,15 +2,19 @@
 #include <iostream>
 #include <cstdlib>
 
-Logger::Logger(std::string filename, TimeHandler &timeHandler, bool rewrite)
-:timeHandler(timeHandler)
+Logger::Logger(LogConfig conf, TimeHandler &timeHandler)
+:conf(conf),
+timeHandler(timeHandler)
 {
- std::filesystem::create_directories(path);
- logFile.open(path / filename, std::ios::out | (rewrite ? std::ios::trunc : std::ios::app));
+ logFile.open(conf.path + "/" + conf.file, std::ios::out | (conf.rewrite ? std::ios::trunc : std::ios::app));
 }
 
   void Logger::log(LogLevel logLevel, std::string message){
     const char *levelName;
+
+    if (logLevel < conf.minLogLevel){
+      return;
+    }
 
     switch (logLevel)
     {

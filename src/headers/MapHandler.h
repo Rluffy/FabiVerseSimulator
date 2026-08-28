@@ -4,15 +4,14 @@
 #include "Person.h"
 #include <map>
 #include <vector>
+#include "../configs/MapConfig.h"
 
 
 class MapHandler{
 public:
-   int worldLength;
-   int worldWidth;
    std::map<Coordinate, int> objectCoordinates;
 
-   MapHandler(int worldLength, int worldWidth);
+   MapHandler(MapConfig conf);
    void movePerson(Person &p);
    void updatePersonCoordinate(Person &p, Coordinate newCoord);
    void insertPersonCoordinate(Person &p, Coordinate newCoord);
@@ -20,6 +19,7 @@ public:
    Coordinate* getNextFreePostion();
    Person* getFirstNeighbour(const Person &person);
    vector<int> getPersonNeighbourIds(const Person &person);
+   MapConfig conf;
 
 
    

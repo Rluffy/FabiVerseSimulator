@@ -5,9 +5,9 @@
 using namespace std;
 
 
-TimeHandler::TimeHandler(Date currentDate, int pregnancyTimeMonths)
-:currentDate(currentDate),
-pregnancyTimeMonths(pregnancyTimeMonths)
+TimeHandler::TimeHandler(TimeConfig conf)
+:conf(conf),
+currentDate(conf.startDate)
 {
 
 

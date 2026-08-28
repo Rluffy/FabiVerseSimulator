@@ -4,18 +4,17 @@
 using namespace std;
 
 
-  MapHandler::MapHandler(int worldLength, int worldWidth)
-  :worldLength(worldLength),
-  worldWidth(worldWidth)
+  MapHandler::MapHandler(MapConfig conf)
+  :conf(conf)
   {
   }
 
 
 Coordinate *MapHandler::getNextFreePostion()
 {
-  for (int x = 0; x < worldLength; x++)
+  for (int x = 0; x < conf.worldLength; x++)
   {
-    for (int y = 0; y < worldWidth; y++)
+    for (int y = 0; y < conf.worldWidth; y++)
     {
       Coordinate cord = {x, y};
       auto it = objectCoordinates.find(cord);
@@ -44,13 +43,13 @@ void MapHandler::movePerson(Person &p)
   {
     int moveDirectionX = rand() % (max - min + 1) + min;
     xCordinate += movPerhour * moveDirectionX;
-    if (xCordinate > worldLength || xCordinate < 0)
+    if (xCordinate > conf.worldLength || xCordinate < 0)
     {
       xCordinate -= movPerhour * moveDirectionX;
     }
     int moveDirectionY = rand() % (max - min + 1) + min;
     yCordinate += movPerhour * moveDirectionY;
-    if (yCordinate > worldWidth || yCordinate < 0)
+    if (yCordinate > conf.worldWidth || yCordinate < 0)
     {
       yCordinate -= movPerhour * moveDirectionY;
     }

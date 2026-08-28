@@ -1,15 +1,22 @@
 <config>
 
+<world>
+<simDurationDays>8000</simDurationDays>
+</world>
 <log>
 <file>logfile.log</file>
-<path>~/logs</path>
+<path>/home/fabian/logs</path>
+<rewrite>y</rewrite>
+<minLogLevel>1</minLogLevel>
 </log>
 
 <person>
-<startPersonCount>100<startPersonCount>
+<startPersonCount>10</startPersonCount>
 <pregTimeMonths>9</pregTimeMonths>
-<relLevel>2<relLevel>
-<adultAgeYears>18<adultAgeYears>
+<relLevel>2</relLevel>
+<adultAgeYears>18</adultAgeYears>
+<!-- Probability in % for male, else female -->
+<maleProbability>30</maleProbability>
 </person>
 
 <time>

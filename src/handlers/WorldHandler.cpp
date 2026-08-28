@@ -1,17 +1,17 @@
 #include "../headers/WorldHandler.h"
 
+
 #include <thread>
 #include <chrono>
 
 using namespace std;
 
-WorldHandler::WorldHandler(World world)
-    : world(world),
-      th(world.startDate, world.pregnancyTimeMonths),
-      mh(world.length, world.width),
-      logger("fabiVerseLog", th, true),
-      ph(mh, th, logger)
-
+WorldHandler::WorldHandler(Config conf)
+    : th(conf.timeConfig),
+      mh(conf.mapConfig),
+      logger(conf.logConfig, th),
+      ph(mh, th, logger, conf.personConfig),
+      conf(conf.worldConfig)
 {
 }
 
@@ -20,8 +20,8 @@ void WorldHandler::startSimulation()
   prepareSimulation();
 
   logger.log(LogLevel::INFO, "Start simulating");
-  cout << "Starting" << endl;
-  for (int i = 0; i < 3000; i++)
+  cout << "Start simulating" << endl;
+  for (int i = 0; i < conf.simDurationDays; i++)
   {
     simulateDay();
     th.nextDay(); 

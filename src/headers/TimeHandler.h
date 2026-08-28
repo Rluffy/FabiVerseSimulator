@@ -1,14 +1,16 @@
 #pragma once
 
 #include "Date.h"
-
+#include "../configs/TimeConfig.h"
 
 
 class TimeHandler{
 public:
-   Date currentDate;
-   int pregnancyTimeMonths;
+ TimeConfig conf;
+ Date currentDate;
 
-   TimeHandler(Date currentDate, int pregnancyTimeMonths);
+
+
+   TimeHandler(TimeConfig conf);
    void nextDay();
 };
