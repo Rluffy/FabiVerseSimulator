@@ -7,7 +7,7 @@
 #pragma once
 using namespace std;
 
-class Person
+class Person : public Object
 {
 public:
     int id;
@@ -21,8 +21,8 @@ public:
     bool dead;
 
     
-    int motherId;
-    int fatherId;
+    Person* mother;
+    Person* father;
 
     int murderCount;
     int babyCount;

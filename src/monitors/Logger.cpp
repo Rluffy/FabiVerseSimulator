@@ -19,23 +19,23 @@ timeHandler(timeHandler)
     switch (logLevel)
     {
     case DEBUG:
-      levelName = "DEBUG";
+      levelName = "[DEBUG]  ";
       break;
     case INFO:
-      levelName = "INFO";
+      levelName = "[INFO]   ";
       break;
     case WARNING:
-      levelName = "WARNING";
+      levelName = "[WARNING]";
       break;
     case ERROR:
-      levelName = "ERROR";
+      levelName = "[ERROR]  ";
       break;
     default:
-      levelName = "UNKNOWN";
+      levelName = "[UNKNOWN]";
       break;
     }
 
-    logFile << "[" << timeHandler.currentDate.toDateString() << "]" << "[" << levelName << "] " << message << std::endl;
+    logFile << "[" << timeHandler.currentDate.toDateString() << "]"  << levelName  << message << std::endl;
 
   }
 

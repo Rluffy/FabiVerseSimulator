@@ -27,12 +27,7 @@ void WorldHandler::startSimulation()
     th.nextDay(); 
   }
 
-  logger.log(LogLevel::INFO, "Person count: " + to_string(ph.persons.size()));
-  logger.log(LogLevel::INFO, "Overall killed count: " + to_string(ph.overallPersonsKilled));
-  logger.log(LogLevel::INFO, "Overall babys born: " + to_string(ph.overallBabyCount));
-  logger.log(LogLevel::INFO, "Overall sex count: " + to_string(ph.overallSexCount));
-  logger.log(LogLevel::INFO, "Overall persons lived count: " + to_string(ph.overallBabyCount + ph.conf.startPersonCount));
-  logger.log(LogLevel::INFO, "Overall persons died count: " + to_string(ph.overallDeathCount));
+ ph.logPersonStatistics();
 
 
   cout << "Finished" << endl;
