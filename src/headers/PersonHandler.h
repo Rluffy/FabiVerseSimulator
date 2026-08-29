@@ -12,7 +12,11 @@ class PersonHandler{
     public:
      vector<Person> persons;
      vector<Person> babies;
-     int nextPersonId = 0;
+     int nextPersonId;
+     int overallPersonsKilled;
+     int overallBabyCount;
+     int overallSexCount;
+     int overallDeathCount;
      PersonConfig conf;
      MapHandler &mapHandler;
      TimeHandler &timeHandler;
@@ -37,8 +41,11 @@ class PersonHandler{
      bool isRelated(const Person &p1, const Person &p2, int relLevel = 0);
      bool isAdult(const Person &p1);
      bool isMurder(const Person &p1);
+     bool isDying(const Person &p1);
+     void dying(Person &p1, bool printLog = true);
      bool getRandomMurderPersonality();
-     void killPerson(const Person &murder, Person &victim);
+     int getRandomDyingAge();
+     void killPerson(Person &murder, Person &victim);
 
 
 

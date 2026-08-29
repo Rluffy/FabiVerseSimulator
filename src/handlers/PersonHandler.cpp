@@ -5,7 +5,13 @@ PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, L
     : mapHandler(mapHandler),
       timeHandler(timeHandler),
       logger(logger),
-      conf(conf)
+      conf(conf),
+      nextPersonId(0),
+      overallPersonsKilled(0),
+      overallBabyCount(0),
+      overallSexCount(0),
+      overallDeathCount(0)
+
 {
 }
 
@@ -16,7 +22,7 @@ void PersonHandler::preparePersons()
   for (int i = 0; i < conf.startPersonCount; i++)
   {
     nextPersonId++;
-    Person p(nextPersonId, {1, 1, 1900}, to_string(nextPersonId), getRandomGender());
+    Person p(nextPersonId, {1, 1, 1980}, to_string(nextPersonId), getRandomGender(), getRandomDyingAge());
     Coordinate *cord = mapHandler.getNextFreePostion();
     if (cord)
     {
@@ -41,7 +47,7 @@ void PersonHandler::simulatePersons()
       }
       mapHandler.movePerson(person);
 
-      // murders only kill not reproduce 
+      // murders only kill not reproduce
       if (isMurder(person))
       {
         Person *victimP = getVictim(person);
@@ -57,6 +63,11 @@ void PersonHandler::simulatePersons()
       if (repPartner)
       {
         reproduce(person, *repPartner);
+      }
+// check if persons die age
+      if (isDying(person))
+      {
+        dying(person);
       }
     }
   }
@@ -75,33 +86,34 @@ void PersonHandler::babyBirth(Person &baby)
   Person *motherP = getPersonById(baby.motherId);
   if (motherP)
   {
-    Person &mother = *motherP;
-    mother.pregnant = false;
-  }
+    motherP->pregnant = false;
 
-  // find free coordinates
-  Coordinate *birthLocationP = mapHandler.getNextFreePostion();
+    // find free coordinates
+    Coordinate *birthLocationP = mapHandler.getNextFreePostion();
 
-  // Baby only born when free space found
-  if (birthLocationP)
-  {
-    Coordinate birthLocation = *birthLocationP;
-    delete birthLocationP;
-    string babyMurderText = "";
-
-    // baby become a murder in future
-    if (getRandomMurderPersonality())
+    // Baby only born when free space found
+    if (birthLocationP)
     {
-      babyMurderText = " will become a murder";
-      baby.murder = true; 
-    }
+      Coordinate birthLocation = *birthLocationP;
+      delete birthLocationP;
+      string babyMurderText = "";
+      motherP->babyCount++;
+      overallBabyCount++;
 
-    insertPerson(baby, birthLocation);
-    logger.log(LogLevel::INFO, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId) + babyMurderText);
-  }
-  else
-  {
-    logger.log(LogLevel::WARNING, " Field is full, person count: " + to_string(persons.size()));
+      // baby become a murder in future
+      if (getRandomMurderPersonality())
+      {
+        babyMurderText = " will become a murder";
+        baby.murder = true;
+      }
+
+      insertPerson(baby, birthLocation);
+      logger.log(LogLevel::INFO, "Baby born, id: " + to_string(baby.id) + " birthdate: " + baby.birthdate.toDateString() + " mother id: " + to_string(baby.motherId) + " father id: " + to_string(baby.fatherId) + babyMurderText);
+    }
+    else
+    {
+      logger.log(LogLevel::WARNING, " Field is full, person count: " + to_string(persons.size()));
+    }
   }
 }
 
@@ -141,6 +153,11 @@ Person *PersonHandler::getVictim(const Person &person)
 
 void PersonHandler::reproduce(Person &p1, Person &p2)
 {
+
+  p1.sexCount++;
+  p2.sexCount++;
+  overallSexCount++;
+
   Date birthDate;
   int fatherId;
   int motherId;
@@ -163,7 +180,8 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
   // create baby
   // 1/2 for male or female
   Gender babyGender = getRandomGender();
-  Person baby(++nextPersonId, birthDate, to_string(nextPersonId), babyGender);
+  int dyingAge = getRandomDyingAge();
+  Person baby(++nextPersonId, birthDate, to_string(nextPersonId), babyGender, dyingAge);
   baby.fatherId = fatherId;
   baby.motherId = motherId;
   babies.push_back(baby);
@@ -193,10 +211,11 @@ void PersonHandler::processBirths()
 
 void PersonHandler::processDeads()
 {
- vector<Person> undeadPersons;
+  vector<Person> undeadPersons;
   for (Person &person : persons)
   {
-    if(!person.dead){
+    if (!person.dead)
+    {
       undeadPersons.push_back(person);
     }
   }
@@ -338,24 +357,56 @@ bool PersonHandler::isMurder(const Person &p1)
   return p1.murder && isAdult(p1);
 }
 
-void PersonHandler::killPerson(const Person &murder, Person &victim)
+void PersonHandler::killPerson(Person &murder, Person &victim)
 {
   string babyVictimText = "";
 
-    if (victim.pregnant)
+  if (victim.pregnant)
+  {
+    // also baby will die
+    auto babyIt = getUnbornBabyItByMotherId(victim.id);
+    if (babyIt != babies.end())
     {
-      // also baby will die
-      auto babyIt = getUnbornBabyItByMotherId(victim.id);
-      if (babyIt != babies.end())
-      {
-        babyVictimText = " Unborn Baby, id " + to_string(babyIt->id) + " also killed";
-        babies.erase(babyIt);
-      }
+      babyVictimText = " Unborn Baby, id " + to_string(babyIt->id) + " also killed";
+      babies.erase(babyIt);
     }
+  }
 
-    logger.log(LogLevel::INFO, "Murder, id: " + to_string(murder.id) + " killed victim id: " +
-                                   to_string(victim.id) + babyVictimText);
-    // set person dead with it
-    victim.dead = true;
-    mapHandler.removePersonCoordinate(victim);
+  logger.log(LogLevel::INFO, "Murder, id: " + to_string(murder.id) + " killed victim id: " +
+                                 to_string(victim.id) + babyVictimText);
+  murder.murderCount++;
+  overallPersonsKilled++;
+ 
+  dying(victim,false);
+}
+
+void PersonHandler::dying(Person &p1, bool printLog)
+{
+  p1.dead = true;
+  mapHandler.removePersonCoordinate(p1);
+  overallDeathCount++;
+
+  if(printLog){
+
+  logger.log(LogLevel::INFO, "Person, id: " + to_string(p1.id) + " died at age: " +
+                                 to_string(p1.dyingAge));
+  }                              
+}
+
+int PersonHandler::getRandomDyingAge()
+{
+  return conf.minDyingAge + rand() % (conf.maxDyingAge - conf.minDyingAge + 1);
+}
+
+bool ::PersonHandler::isDying(const Person &p1)
+{
+  Date dyingDate = p1.birthdate;
+  dyingDate.addYears(p1.dyingAge);
+
+  if (timeHandler.currentDate >= dyingDate)
+  {
+    return true;
+  }
+
+  return false;
 }

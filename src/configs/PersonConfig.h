@@ -11,4 +11,6 @@ struct PersonConfig
     int maleProbability;
     // Probability in % for murder, else no murder
     int murderProbability;
+    int minDyingAge;
+    int maxDyingAge;
 };

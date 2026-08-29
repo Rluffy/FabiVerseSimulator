@@ -1,7 +1,7 @@
 #include "../headers/Person.h"
 #include <cstdlib>
 
-Person::Person(int id, Date birthdate, string name, Gender gender)
+Person::Person(int id, Date birthdate, string name, Gender gender, int dyingAge)
     : id(id),
       birthdate(birthdate),
       name(name),
@@ -11,8 +11,13 @@ Person::Person(int id, Date birthdate, string name, Gender gender)
       murder(false),
       motherId(-1),
       fatherId(-1),
+      movementPerHour(1),
+      murderCount(0),
+      babyCount(0),
+      sexCount(0),
       babyBirthDate{0, 0, 0},
-      pregnancyDate{0, 0, 0}
+      pregnancyDate{0, 0, 0},
+      dyingAge(dyingAge)
 
 {
 }

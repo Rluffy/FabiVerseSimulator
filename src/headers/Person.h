@@ -23,10 +23,15 @@ public:
     
     int motherId;
     int fatherId;
+
+    int murderCount;
+    int babyCount;
+    int sexCount;
+    int dyingAge;
     Date babyBirthDate;
     Date pregnancyDate;
-    int movementPerHour = 1;
+    int movementPerHour;
 
-    Person(int id, Date birthdate, string name, Gender gender);
+    Person(int id, Date birthdate, string name, Gender gender, int dyingAge);
      string toString() const;
 };

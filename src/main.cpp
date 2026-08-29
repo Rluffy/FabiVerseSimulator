@@ -9,7 +9,8 @@ Config loadConfigs()
     pugi::xml_parse_result result = doc.load_file("../config/config.xml");
 
     // not ok status
-    if (result.status != 0){
+    if (result.status != 0)
+    {
         cout << "Error opening file: " << result.description();
     }
 
@@ -37,14 +38,17 @@ Config loadConfigs()
     persConf.adultAgeYears = personNode.child("adultAgeYears").text().as_int();
     persConf.maleProbability = personNode.child("maleProbability").text().as_int();
     persConf.murderProbability = personNode.child("murderProbability").text().as_int();
+    persConf.minDyingAge = personNode.child("minDyingAge").text().as_int();
+    persConf.maxDyingAge = personNode.child("maxDyingAge").text().as_int();
 
     // Time config
     auto timeNode = confNode.child("time");
     TimeConfig timeConf;
     std::string timeStr = timeNode.child("startDate").text().as_string();
 
-    if (timeStr.empty()){
-        timeStr="08092003";
+    if (timeStr.empty())
+    {
+        timeStr = "08092003";
         cout << "Empty TimeString";
     }
     int day = std::stoi(timeStr.substr(0, 2));
@@ -71,8 +75,8 @@ Config loadConfigs()
 int main(int argc, char const *argv[])
 {
 
-   // World world(0, "World1", {1, 1, 2020}, 100, 100, 36);
-    Config conf  = loadConfigs();
+    // World world(0, "World1", {1, 1, 2020}, 100, 100, 36);
+    Config conf = loadConfigs();
     WorldHandler wh(conf);
     wh.startSimulation();
     return 0;

@@ -15,10 +15,12 @@
 <pregTimeMonths>1</pregTimeMonths>
 <relLevel>2</relLevel>
 <adultAgeYears>1</adultAgeYears>
+<minDyingAge>10</minDyingAge>
+<maxDyingAge>30</maxDyingAge>
 <!-- Probability in % for male, else female -->
 <maleProbability>50</maleProbability>
 <!-- Probability in % for murder, else no murder -->
-<murderProbability>100</murderProbability>
+<murderProbability>10</murderProbability>
 </person>
 
 <time>
