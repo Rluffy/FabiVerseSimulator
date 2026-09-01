@@ -2,15 +2,16 @@
 #include <cstdlib>
 
 Person::Person(int id, Date birthdate, string name, Gender gender, int dyingAge)
-    : id(id),
+    : Object(id),
+      id(id),
       birthdate(birthdate),
       name(name),
       gender(gender),
       coordinate{0, 0},
       pregnant(false),
       murder(false),
-      motherId(-1),
-      fatherId(-1),
+      mother(nullptr),
+      father(nullptr),
       movementPerHour(1),
       murderCount(0),
       babyCount(0),

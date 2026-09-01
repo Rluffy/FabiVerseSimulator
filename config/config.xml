@@ -1,26 +1,26 @@
 <config>
 
 <world>
-<simDurationDays>16000</simDurationDays>
+<simDurationDays>25000</simDurationDays>
 </world>
 <log>
 <file>logfile.log</file>
 <path>/home/fabian/logs</path>
 <rewrite>y</rewrite>
-<minLogLevel>0</minLogLevel>
+<minLogLevel>1</minLogLevel>
 </log>
 
 <person>
-<startPersonCount>50</startPersonCount>
-<pregTimeMonths>1</pregTimeMonths>
+<startPersonCount>10</startPersonCount>
+<pregTimeMonths>9</pregTimeMonths>
 <relLevel>2</relLevel>
 <adultAgeYears>1</adultAgeYears>
-<minDyingAge>15</minDyingAge>
-<maxDyingAge>20</maxDyingAge>
+<minDyingAge>30</minDyingAge>
+<maxDyingAge>80</maxDyingAge>
 <!-- Probability in % for male, else female -->
 <maleProbability>50</maleProbability>
 <!-- Probability in % for murder, else no murder -->
-<murderProbability>10</murderProbability>
+<murderProbability>1</murderProbability>
 </person>
 
 <time>

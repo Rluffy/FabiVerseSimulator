@@ -3,11 +3,12 @@
 #include "Date.h"
 #include "Gender.h"
 #include "Coordinate.h"
+#include "Object.h"
 
 #pragma once
 using namespace std;
 
-class Person : public Object
+class Person: public Object
 {
 public:
     int id;

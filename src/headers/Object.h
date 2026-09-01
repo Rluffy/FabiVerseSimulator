@@ -8,6 +8,9 @@ class Object
 public:
      int id;
      Coordinate coordinate;
+
+     Object(int id);
+    
      // for dynamic casting
      virtual ~Object() = default;
 };

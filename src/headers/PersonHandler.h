@@ -12,6 +12,7 @@ class PersonHandler{
     public:
      vector<Person*> babies;
      vector<Person*> persons;
+     vector<Person*> deadPersons;
      int nextPersonId;
      int overallPersonsKilled;
      int overallBabyCount;
