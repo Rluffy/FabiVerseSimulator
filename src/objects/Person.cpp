@@ -10,7 +10,7 @@ Person::Person(int id, Date birthdate, string name, Gender gender, int dyingAge)
       coordinate{0, 0},
       pregnant(false),
       murder(false),
-      mother(nullptr),
+      motherP(nullptr),
       father(nullptr),
       movementPerHour(1),
       murderCount(0),

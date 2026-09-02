@@ -3,36 +3,34 @@
 
 using namespace std;
 
+MapHandler::MapHandler(MapConfig conf)
+    : conf(conf)
+{
+}
 
-  MapHandler::MapHandler(MapConfig conf)
-  :conf(conf)
-  {
-  }
-
-
-Coordinate *MapHandler::getNextFreePostion()
+optional<Coordinate> MapHandler::getNextFreePostion()
 {
   for (int x = 0; x < conf.worldLength; x++)
   {
     for (int y = 0; y < conf.worldWidth; y++)
     {
       Coordinate cord = {x, y};
-      auto it = objectCoordinates.find(cord);
+      auto it = oCoordinates.find(cord);
       // Free postion found
-      if (it == objectCoordinates.end())
+      if (it == oCoordinates.end())
       {
-        return new Coordinate{x, y};
+        return cord;
       }
     }
   }
-  return nullptr;
+  return nullopt;
 }
 
 bool MapHandler::movePerson(Person &p)
 {
   int min = -1;
   int max = 1;
-  int movPerhour = p.movementPerHour;
+  int movePerhour = p.movementPerHour;
 
   int xCordinate = p.coordinate.x;
   int yCordinate = p.coordinate.y;
@@ -42,22 +40,26 @@ bool MapHandler::movePerson(Person &p)
   do
   {
     int moveDirectionX = rand() % (max - min + 1) + min;
-    xCordinate += movPerhour * moveDirectionX;
+    int moveDirectionY = rand() % (max - min + 1) + min;
+
+    xCordinate += movePerhour * moveDirectionX;
+    yCordinate += movePerhour * moveDirectionY;
+
     if (xCordinate > conf.worldLength || xCordinate < 0)
     {
-      xCordinate -= movPerhour * moveDirectionX;
+      xCordinate -= movePerhour * moveDirectionX;
     }
-    int moveDirectionY = rand() % (max - min + 1) + min;
-    yCordinate += movPerhour * moveDirectionY;
+
     if (yCordinate > conf.worldWidth || yCordinate < 0)
     {
-      yCordinate -= movPerhour * moveDirectionY;
+      yCordinate -= movePerhour * moveDirectionY;
     }
+
     newCoord = {xCordinate, yCordinate};
   } while (newCoord == p.coordinate);
 
   // Only move person when cordinates are free
-  if (objectCoordinates.find(newCoord) == objectCoordinates.end())
+  if (oCoordinates.find(newCoord) == oCoordinates.end())
   {
     updatePersonCoordinate(p, newCoord);
     return true;
@@ -66,29 +68,27 @@ bool MapHandler::movePerson(Person &p)
   return false;
 }
 
-
-
 void MapHandler::updatePersonCoordinate(Person &p, Coordinate newCoord)
 {
-  objectCoordinates2.erase(p.coordinate);
-  objectCoordinates2.insert({newCoord, &p});
+  oCoordinates.erase(p.coordinate);
+  oCoordinates.insert({newCoord, &p});
   p.coordinate = newCoord;
 }
 
-void MapHandler::insertPersonCoordinate(Person* p, Coordinate newCoord)
+void MapHandler::insertPersonCoordinate(Person *pP, Coordinate newCoord)
 {
-  objectCoordinates2.insert({newCoord, p});
-  p->coordinate = newCoord;
+  oCoordinates.insert({newCoord, pP});
+  pP->coordinate = newCoord;
 }
 
 void MapHandler::removePersonCoordinate(const Person &p)
 {
-  objectCoordinates2.erase(p.coordinate);
+  oCoordinates.erase(p.coordinate);
 }
 
-vector<Person*> MapHandler::getPersonNeighbours(const Person &person)
+vector<Person *> MapHandler::getPersonNeighbours(const Person &person)
 {
-  vector<Person*> neighbPtrs;
+  vector<Person *> neighbPtrs;
   int xP = person.coordinate.x;
   int yP = person.coordinate.y;
   int xNextPos, yNextPos;
@@ -105,19 +105,17 @@ vector<Person*> MapHandler::getPersonNeighbours(const Person &person)
       }
       yNextPos = yP + y;
 
-      auto it = objectCoordinates2.find({xNextPos, yNextPos});
+      auto it = oCoordinates.find({xNextPos, yNextPos});
       // neighbour found
-      if (it != objectCoordinates2.end() && it->second )
+      if (it != oCoordinates.end() && it->second)
       {
-        Person* neighbour = dynamic_cast<Person*>(it->second);
-        if(neighbour){
+        Person *neighbour = dynamic_cast<Person *>(it->second);
+        if (neighbour)
+        {
           neighbPtrs.push_back(neighbour);
-
         }
-    
       }
     }
   }
   return neighbPtrs;
 }
-

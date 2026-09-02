@@ -8,7 +8,7 @@
 #pragma once
 using namespace std;
 
-class Person: public Object
+class Person : public Object
 {
 public:
     int id;
@@ -21,9 +21,8 @@ public:
     bool murder;
     bool dead;
 
-    
-    Person* mother;
-    Person* father;
+    Person *motherP;
+    Person *father;
 
     int murderCount;
     int babyCount;
@@ -34,5 +33,5 @@ public:
     int movementPerHour;
 
     Person(int id, Date birthdate, string name, Gender gender, int dyingAge);
-     string toString() const;
+    string toString() const;
 };

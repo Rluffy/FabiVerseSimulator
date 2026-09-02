@@ -6,23 +6,20 @@
 #include <map>
 #include <vector>
 #include "../configs/MapConfig.h"
+#include <optional>
 
-
-class MapHandler{
+class MapHandler
+{
 public:
-   std::map<Coordinate, int> objectCoordinates;
-   std::map<Coordinate, Object*> objectCoordinates2;
-
    MapHandler(MapConfig conf);
    bool movePerson(Person &p);
    void updatePersonCoordinate(Person &p, Coordinate newCoord);
-   void insertPersonCoordinate(Person* p, Coordinate newCoord);
+   void insertPersonCoordinate(Person *pP, Coordinate newCoord);
    void removePersonCoordinate(const Person &p);
-   Coordinate* getNextFreePostion();
-   vector<Person*> getPersonNeighbours(const Person &person);
+   std::optional<Coordinate> getNextFreePostion();
+   vector<Person *> getPersonNeighbours(const Person &p);
    MapConfig conf;
 
-
-   
-
+private:
+   std::map<Coordinate, Object *> oCoordinates;
 };
