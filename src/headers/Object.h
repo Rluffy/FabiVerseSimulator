@@ -6,11 +6,13 @@
 class Object
 {
 public:
-     int id;
-     Coordinate coordinate;
+     Object(int id, int movementPerHour = 0);
 
-     Object(int id);
-    
      // for dynamic casting
      virtual ~Object() = default;
+
+private:
+     int id;
+     int movementPerHour;
+     Coordinate coordinate;
 };

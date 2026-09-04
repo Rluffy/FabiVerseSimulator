@@ -13,4 +13,5 @@ struct PersonConfig
     int murderProbability;
     int minDyingAge;
     int maxDyingAge;
+    int movementPerHour;
 };

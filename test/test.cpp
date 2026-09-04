@@ -5,7 +5,6 @@
 #include <iostream>
 #include "../src/pugixml/pugixml.hpp"
 
-
 using namespace std;
 MapHandler mh(100, 100);
 TimeHandler th({1, 1, 2020}, 9);
@@ -36,20 +35,20 @@ void isRelatedTest()
     Person ingrid(++nextPersonId, {1, 1, 2006}, "ingrid", Gender::Female); // 9
     Person dario(++nextPersonId, {1, 1, 2006}, "dario", Gender::Male);     // 9
 
-    mama.motherId = oma.id;
-    mama.fatherId = opa.id;
-    papa.motherId = oma2.id;
-    papa.fatherId = opa2.id;
-    robert.motherId = oma.id;
-    robert.fatherId = opa.id;
+    mama.motherId = oma.personId;
+    mama.fatherId = opa.personId;
+    papa.motherId = oma2.personId;
+    papa.fatherId = opa2.personId;
+    robert.motherId = oma.personId;
+    robert.fatherId = opa.personId;
 
-    fabian.motherId = mama.id;
-    hannah.motherId = mama.id;
-    fabian.fatherId = papa.id;
-    hannah.fatherId = papa.id;
+    fabian.motherId = mama.personId;
+    hannah.motherId = mama.personId;
+    fabian.fatherId = papa.personId;
+    hannah.fatherId = papa.personId;
 
-    dario.fatherId = robert.id;
-    dario.motherId = sandra.id;
+    dario.fatherId = robert.personId;
+    dario.motherId = sandra.personId;
 
     // check grand parents
 
@@ -82,18 +81,14 @@ void isRelatedTest()
 void pugiXml()
 {
 
-   pugi::xml_document doc;
+    pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file("../config/config.xml");
-  
-    
-  // Log config
-        auto confNode = doc.child("config");
-        auto logNode = confNode.child("log");
-        cout << logNode.child("file").text().as_string();
-        cout << logNode.child("path").text().as_string();
-  
 
-
+    // Log config
+    auto confNode = doc.child("config");
+    auto logNode = confNode.child("log");
+    cout << logNode.child("file").text().as_string();
+    cout << logNode.child("path").text().as_string();
 }
 int main(int argc, char const *argv[])
 {

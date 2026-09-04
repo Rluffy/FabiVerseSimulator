@@ -40,6 +40,7 @@ Config loadConfigs()
     persConf.murderProbability = personNode.child("murderProbability").text().as_int();
     persConf.minDyingAge = personNode.child("minDyingAge").text().as_int();
     persConf.maxDyingAge = personNode.child("maxDyingAge").text().as_int();
+    persConf.movementPerHour = personNode.child("movementPerHour").text().as_int();
 
     // Time config
     auto timeNode = confNode.child("time");
@@ -63,19 +64,23 @@ Config loadConfigs()
     mapConf.worldLength = mapNode.child("worldLength").text().as_int();
     mapConf.worldWidth = mapNode.child("worldWidth").text().as_int();
 
+    // Food config
+    auto foodNode = confNode.child("food");
+    FoodConfig foodConf;
+    foodConf.foodSpawnRateDay = mapNode.child("foodSpawnRateDay").text().as_int();
+
     Config conf;
     conf.worldConfig = worldConf;
     conf.logConfig = logConf;
     conf.personConfig = persConf;
     conf.timeConfig = timeConf;
     conf.mapConfig = mapConf;
+    conf.foodConfig = foodConf;
 
     return conf;
 }
 int main(int argc, char const *argv[])
 {
-
-    // World world(0, "World1", {1, 1, 2020}, 100, 100, 36);
     Config conf = loadConfigs();
     WorldHandler wh(conf);
     wh.startSimulation();

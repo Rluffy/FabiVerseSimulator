@@ -52,4 +52,5 @@ private:
     bool getRandomMurderPersonality();
     int getRandomDyingAge();
     void killPerson(Person &murder, Person &victim);
+    void lookAround(Person &p);
 };

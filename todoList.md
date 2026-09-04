@@ -1,7 +1,6 @@
 # TODOS for
 
 
-- [] refactor functions with pointers
 - [] better stat prints
     - overall murder lived count
     - current murder count

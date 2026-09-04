@@ -11,12 +11,10 @@ using namespace std;
 class Person : public Object
 {
 public:
-    int id;
+    int personId;
     Date birthdate;
     string name;
     Gender gender;
-
-    Coordinate coordinate;
     bool pregnant;
     bool murder;
     bool dead;
@@ -30,8 +28,7 @@ public:
     int dyingAge;
     Date babyBirthDate;
     Date pregnancyDate;
-    int movementPerHour;
 
-    Person(int id, Date birthdate, string name, Gender gender, int dyingAge);
+    Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour);
     string toString() const;
 };

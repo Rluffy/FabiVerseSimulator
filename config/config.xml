@@ -1,7 +1,7 @@
 <config>
 
 <world>
-<simDurationDays>25000</simDurationDays>
+<simDurationDays>5000</simDurationDays>
 </world>
 <log>
 <file>logfile.log</file>
@@ -15,12 +15,13 @@
 <pregTimeMonths>9</pregTimeMonths>
 <relLevel>2</relLevel>
 <adultAgeYears>1</adultAgeYears>
-<minDyingAge>30</minDyingAge>
+<minDyingAge>20</minDyingAge>
 <maxDyingAge>80</maxDyingAge>
 <!-- Probability in % for male, else female -->
 <maleProbability>50</maleProbability>
 <!-- Probability in % for murder, else no murder -->
 <murderProbability>1</murderProbability>
+<movementPerHour>1</movementPerHour>
 </person>
 
 <time>
@@ -31,6 +32,10 @@
 <worldLength>500</worldLength>
 <worldWidth>500</worldWidth>
 </map>
+
+<food>
+<foodSpawnRateDay>2</foodSpawnRateDay>
+</food>
 
 
 </config>

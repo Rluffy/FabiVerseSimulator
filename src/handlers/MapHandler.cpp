@@ -26,14 +26,14 @@ optional<Coordinate> MapHandler::getNextFreePostion()
   return nullopt;
 }
 
-bool MapHandler::movePerson(Person &p)
+bool MapHandler::moveObject(Object &o)
 {
   int min = -1;
   int max = 1;
-  int movePerhour = p.movementPerHour;
+  int movePerhour = o.movementPerHour;
 
-  int xCordinate = p.coordinate.x;
-  int yCordinate = p.coordinate.y;
+  int xCordinate = o.coordinate.x;
+  int yCordinate = o.coordinate.y;
 
   Coordinate newCoord;
   // Some random movement must happen
@@ -56,66 +56,34 @@ bool MapHandler::movePerson(Person &p)
     }
 
     newCoord = {xCordinate, yCordinate};
-  } while (newCoord == p.coordinate);
+  } while (newCoord == o.coordinate);
 
   // Only move person when cordinates are free
   if (oCoordinates.find(newCoord) == oCoordinates.end())
   {
-    updatePersonCoordinate(p, newCoord);
+    updateObjectCoordinate(o, newCoord);
     return true;
   }
 
   return false;
 }
 
-void MapHandler::updatePersonCoordinate(Person &p, Coordinate newCoord)
+void MapHandler::updateObjectCoordinate(Object &o, Coordinate newCoord)
 {
-  oCoordinates.erase(p.coordinate);
-  oCoordinates.insert({newCoord, &p});
-  p.coordinate = newCoord;
+  oCoordinates.erase(o.coordinate);
+  oCoordinates.insert({newCoord, &o});
+  o.coordinate = newCoord;
 }
 
-void MapHandler::insertPersonCoordinate(Person *pP, Coordinate newCoord)
+void MapHandler::insertObjectCoordinate(Object *oP, Coordinate newCoord)
 {
-  oCoordinates.insert({newCoord, pP});
-  pP->coordinate = newCoord;
+  oCoordinates.insert({newCoord, oP});
+  oP->coordinate = newCoord;
 }
 
-void MapHandler::removePersonCoordinate(const Person &p)
+void MapHandler::removeObjectCoordinate(const Object &o)
 {
-  oCoordinates.erase(p.coordinate);
+  oCoordinates.erase(o.coordinate);
 }
 
-vector<Person *> MapHandler::getPersonNeighbours(const Person &person)
-{
-  vector<Person *> neighbPtrs;
-  int xP = person.coordinate.x;
-  int yP = person.coordinate.y;
-  int xNextPos, yNextPos;
 
-  for (int x = -1; x < 2; x++)
-  {
-    xNextPos = xP + x;
-    for (int y = -1; y < 2; y++)
-    {
-      // Skip same position
-      if (x == 0 && y == 0)
-      {
-        continue;
-      }
-      yNextPos = yP + y;
-
-      auto it = oCoordinates.find({xNextPos, yNextPos});
-      // neighbour found
-      if (it != oCoordinates.end() && it->second)
-      {
-        Person *neighbour = dynamic_cast<Person *>(it->second);
-        if (neighbour)
-        {
-          neighbPtrs.push_back(neighbour);
-        }
-      }
-    }
-  }
-  return neighbPtrs;
-}

@@ -1,18 +1,16 @@
 #include "../headers/Person.h"
 #include <cstdlib>
 
-Person::Person(int id, Date birthdate, string name, Gender gender, int dyingAge)
-    : Object(id),
-      id(id),
+Person::Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour)
+    : Object(personId, movementPerHour),
+      personId(personId),
       birthdate(birthdate),
       name(name),
       gender(gender),
-      coordinate{0, 0},
       pregnant(false),
       murder(false),
       motherP(nullptr),
       father(nullptr),
-      movementPerHour(1),
       murderCount(0),
       babyCount(0),
       sexCount(0),
@@ -24,7 +22,7 @@ Person::Person(int id, Date birthdate, string name, Gender gender, int dyingAge)
 }
 string Person::toString() const
 {
-  return "Person id: " + to_string(this->id) +
+  return "Person personId: " + to_string(this->personId) +
          " Birthdate: " + this->birthdate.toDateString() +
          " Gender: " + (this->gender == Gender::Male ? " M " : " F ") +
          " Name: " + this->name;

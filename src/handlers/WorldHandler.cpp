@@ -1,6 +1,5 @@
 #include "../headers/WorldHandler.h"
 
-
 #include <thread>
 #include <chrono>
 
@@ -11,6 +10,7 @@ WorldHandler::WorldHandler(Config conf)
       mh(conf.mapConfig),
       logger(conf.logConfig, th),
       ph(mh, th, logger, conf.personConfig),
+      fh(conf.foodConfig, mh),
       conf(conf.worldConfig)
 {
 }
@@ -24,20 +24,19 @@ void WorldHandler::startSimulation()
   for (int i = 0; i < conf.simDurationDays; i++)
   {
     simulateDay();
-    th.nextDay(); 
+    th.nextDay();
   }
 
- ph.logPersonStatistics();
-
+  ph.logPersonStatistics();
 
   cout << "Finished" << endl;
   logger.closeLogFile();
-
 }
 
 void WorldHandler::simulateDay()
 {
-    ph.simulatePersons();
+  ph.simulatePersons();
+  fh.spawnFood();
 }
 
 void WorldHandler::prepareSimulation()
