@@ -10,8 +10,6 @@ public:
 
      // for dynamic casting
      virtual ~Object() = default;
-
-private:
      int id;
      int movementPerHour;
      Coordinate coordinate;

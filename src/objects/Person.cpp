@@ -1,7 +1,7 @@
 #include "../headers/Person.h"
 #include <cstdlib>
 
-Person::Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour)
+Person::Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour, Date lastEaten)
     : Object(personId, movementPerHour),
       personId(personId),
       birthdate(birthdate),
@@ -16,6 +16,7 @@ Person::Person(int personId, Date birthdate, string name, Gender gender, int dyi
       sexCount(0),
       babyBirthDate{0, 0, 0},
       pregnancyDate{0, 0, 0},
+      lastEaten(lastEaten),
       dyingAge(dyingAge)
 
 {

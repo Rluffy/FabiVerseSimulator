@@ -9,7 +9,7 @@ class FoodHandler
 {
 
 public:
-    FoodHandler(FoodConfig conf, MapHandler MapHandler);
+    FoodHandler(FoodConfig conf, MapHandler &mapHandler);
     void spawnFood();
 
 private:

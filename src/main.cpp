@@ -41,6 +41,8 @@ Config loadConfigs()
     persConf.minDyingAge = personNode.child("minDyingAge").text().as_int();
     persConf.maxDyingAge = personNode.child("maxDyingAge").text().as_int();
     persConf.movementPerHour = personNode.child("movementPerHour").text().as_int();
+    persConf.hungryStartDays = personNode.child("hungryStartDays").text().as_int();
+    persConf.hungryDeathDays = personNode.child("hungryDeathDays").text().as_int();
 
     // Time config
     auto timeNode = confNode.child("time");
@@ -67,7 +69,7 @@ Config loadConfigs()
     // Food config
     auto foodNode = confNode.child("food");
     FoodConfig foodConf;
-    foodConf.foodSpawnRateDay = mapNode.child("foodSpawnRateDay").text().as_int();
+    foodConf.foodSpawnRateDay = foodNode.child("foodSpawnRateDay").text().as_int();
 
     Config conf;
     conf.worldConfig = worldConf;

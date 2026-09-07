@@ -1,6 +1,6 @@
 #include "../headers/FoodHandler.h"
 
-FoodHandler::FoodHandler(FoodConfig conf, MapHandler mapHandler)
+FoodHandler::FoodHandler(FoodConfig conf, MapHandler &mapHandler)
     : conf(conf),
       mapHandler(mapHandler)
 {
@@ -14,13 +14,11 @@ void FoodHandler::spawnFood()
 
         if (cordO)
         {
-            Food* fP = new Food("food");
-            foodsP.push_back(fP);
-            mapHandler.insertObjectCoordinate(fP,*cordO);
+            Food *fP = new Food("food");
+            mapHandler.insertObjectCoordinate(fP, *cordO);
         }
         else
         {
-            
         }
     }
 }

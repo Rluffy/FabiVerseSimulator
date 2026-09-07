@@ -14,4 +14,6 @@ struct PersonConfig
     int minDyingAge;
     int maxDyingAge;
     int movementPerHour;
+    int hungryStartDays;
+    int hungryDeathDays;
 };

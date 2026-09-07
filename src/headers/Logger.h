@@ -8,25 +8,24 @@
 #include "TimeHandler.h"
 #include "../configs/LogConfig.h"
 
-enum LogLevel{
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR
+enum LogLevel
+{
+  DEBUG,
+  INFO,
+  WARNING,
+  ERROR
 };
 
-
-class Logger {
+class Logger
+{
 public:
   Logger(LogConfig conf, TimeHandler &timeHandler);
-  void log(LogLevel logLevel, std::string message);
+  void log(LogLevel logLevel, std::string message, bool printCurrentTime = false);
   void closeLogFile();
- 
-  private:
+
+private:
   std::ofstream logFile;
   LogConfig conf;
-  //std::filesystem::path path = std::filesystem::path(std::getenv("HOME")) / "logs";
+  // std::filesystem::path path = std::filesystem::path(std::getenv("HOME")) / "logs";
   TimeHandler &timeHandler;
 };
-
-        

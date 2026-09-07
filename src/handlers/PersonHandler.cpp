@@ -1,4 +1,5 @@
 #include "../headers/PersonHandler.h"
+
 #include <algorithm>
 
 PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, PersonConfig conf)
@@ -10,7 +11,8 @@ PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, L
       overallPersonsKilled(0),
       overallBabyCount(0),
       overallSexCount(0),
-      overallDeathCount(0)
+      overallDeathCount(0),
+      overallStarvedCount(0)
 
 {
 }
@@ -22,7 +24,7 @@ void PersonHandler::preparePersons()
   for (int i = 0; i < conf.startPersonCount; i++)
   {
     nextPersonId++;
-    Person *pP = new Person(nextPersonId, {1, 1, 1990}, to_string(nextPersonId), getRandomGender(), getRandomDyingAge(), conf.movementPerHour);
+    Person *pP = new Person(nextPersonId, {1, 1, 1990}, to_string(nextPersonId), getRandomGender(), getRandomDyingAge(), conf.movementPerHour, timeHandler.currentDate);
     auto cord = mapHandler.getNextFreePostion();
     if (cord)
     {
@@ -44,38 +46,28 @@ void PersonHandler::simulatePersons()
       {
         continue;
       }
+
+      // move persons
       bool moved = mapHandler.moveObject(person);
       if (!moved)
       {
         logger.log(LogLevel::DEBUG, "[MOVED] personId: " + to_string(person.personId) + " not moved");
       }
 
+      lookAround(person);
 
-      if (isMurder(person))
-      {
-        Person *victimP = getVictim(person);
-        if (victimP)
-        {
-          killPerson(person, *victimP);
-        }
-      }
-
-      lookAround();
-
-      // Check for reproduction partner
-      Person *repPartnerP = getReproductionPartner(person);
-      // Only reproduce if found
-      if (repPartnerP)
-      {
-        reproduce(person, *repPartnerP);
-      }
       // check if persons die age
       if (isDying(person))
       {
         dying(person);
       }
+      else if (isDyingStarving(person))
+      {
+        dyingStarving(person);
+      }
     }
   }
+
   processDeads();
   processBirths();
 }
@@ -121,10 +113,11 @@ void PersonHandler::babyBirth(Person *babyP)
   }
 }
 
-Person *PersonHandler::getReproductionPartner(const Person &p)
+Person *PersonHandler::getReproductionPartner(const Person &p, const vector<Object *> &neighbsP)
 {
-  vector<Person *> neighbsP = mapHandler.getObjectNeighbours(p);
-  for (auto neighbP : neighbsP)
+  vector<Person *> personNeighbsP = getSpecObjects<Person>(neighbsP);
+
+  for (auto neighbP : personNeighbsP)
   {
     if (isReproductionPossible(p, *neighbP))
     {
@@ -134,14 +127,15 @@ Person *PersonHandler::getReproductionPartner(const Person &p)
   return nullptr;
 }
 
-Person *PersonHandler::getVictim(const Person &p)
+Person *PersonHandler::getVictim(const Person &p, vector<Object *> &neighsP)
 {
-  vector<Person *> victims = mapHandler.getObjectNeighbours(p);
+  Person *victimP = getFirstObject<Person>(neighsP, true);
 
-  if (!victims.empty())
+  if (victimP)
   {
-    return *victims.begin();
+    return victimP;
   }
+
   return nullptr;
 }
 
@@ -170,7 +164,7 @@ void PersonHandler::reproduce(Person &p1, Person &p2)
   // create baby
   Gender babyGender = getRandomGender();
   int dyingAge = getRandomDyingAge();
-  Person *baby = new Person(++nextPersonId, birthDate, to_string(nextPersonId), babyGender, dyingAge, conf.movementPerHour);
+  Person *baby = new Person(++nextPersonId, birthDate, to_string(nextPersonId), babyGender, dyingAge, conf.movementPerHour, timeHandler.currentDate);
   baby->father = fatherP;
   baby->motherP = motherP;
   babiesP.push_back(baby);
@@ -358,6 +352,15 @@ void PersonHandler::killPerson(Person &murder, Person &victim)
   dying(victim, false);
 }
 
+void PersonHandler::dyingStarving(Person &p)
+{
+  logger.log(LogLevel::INFO, "[DEATH][EAT] personId: " + to_string(p.personId) + " starved last eaten: " +
+                                 p.lastEaten.toDateString());
+
+  overallStarvedCount++;
+  dying(p, false);
+}
+
 void PersonHandler::dying(Person &p1, bool printLog)
 {
   p1.dead = true;
@@ -389,14 +392,72 @@ bool PersonHandler::isDying(const Person &p1)
   return false;
 }
 
-void PersonHandler::lookAround(Person &p){
-  
-  auto neighbsP = mapHandler.getObjectNeighbours<Object>(p);
+bool PersonHandler::isDyingStarving(const Person &p1)
+{
+  Date starvedDate = p1.lastEaten;
+  starvedDate.addDays(conf.hungryDeathDays);
 
-  for (auto neighP : neighbsP){
-    
+  if (timeHandler.currentDate >= starvedDate)
+  {
+    return true;
   }
 
+  return false;
+}
+
+void PersonHandler::lookAround(Person &p)
+{
+  auto neighbsP = mapHandler.getObjectNeighbours<Object>(p);
+
+  if (isMurder(p))
+  {
+    Person *victimP = getVictim(p, neighbsP);
+    if (victimP)
+    {
+      killPerson(p, *victimP);
+    }
+  }
+
+  if (isHungry(p))
+  {
+    // Get food
+    Food *foodP = getFirstObject<Food>(neighbsP, false);
+    if (foodP)
+    {
+      eat(p, foodP);
+      return;
+    }
+  }
+
+  // Check for reproduction partner
+  Person *repPartnerP = getReproductionPartner(p, neighbsP);
+  // Only reproduce if found
+  if (repPartnerP)
+  {
+    reproduce(p, *repPartnerP);
+  }
+}
+
+bool PersonHandler::isHungry(const Person &p)
+{
+
+  Date hungryDate = p.lastEaten;
+  hungryDate.addDays(conf.hungryStartDays);
+
+  if (timeHandler.currentDate >= hungryDate)
+  {
+    return true;
+  }
+
+  return false;
+}
+
+void PersonHandler::eat(Person &p, Food *foodP)
+{
+  mapHandler.removeObjectCoordinate(*foodP);
+  delete foodP;
+  p.lastEaten = timeHandler.currentDate;
+  logger.log(LogLevel::DEBUG, "[EAT] id " + to_string(p.id) + " eats food");
 }
 
 void PersonHandler::logPersonStatistics()
@@ -407,4 +468,10 @@ void PersonHandler::logPersonStatistics()
   logger.log(LogLevel::INFO, "[STATS] Overall sex count: " + to_string(overallSexCount));
   logger.log(LogLevel::INFO, "[STATS] Overall persons lived count: " + to_string(overallBabyCount + conf.startPersonCount));
   logger.log(LogLevel::INFO, "[STATS] Overall persons died count: " + to_string(overallDeathCount));
+  logger.log(LogLevel::INFO, "[STATS] Overall persons starved count: " + to_string(overallStarvedCount));
+}
+
+int PersonHandler::getPersonsSize()
+{
+  return personsP.size();
 }

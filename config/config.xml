@@ -7,7 +7,7 @@
 <file>logfile.log</file>
 <path>/home/fabian/logs</path>
 <rewrite>y</rewrite>
-<minLogLevel>1</minLogLevel>
+<minLogLevel>0</minLogLevel>
 </log>
 
 <person>
@@ -22,6 +22,8 @@
 <!-- Probability in % for murder, else no murder -->
 <murderProbability>1</murderProbability>
 <movementPerHour>1</movementPerHour>
+<hungryStartDays>1</hungryStartDays>
+<hungryDeathDays>30</hungryDeathDays>
 </person>
 
 <time>
@@ -34,7 +36,7 @@
 </map>
 
 <food>
-<foodSpawnRateDay>2</foodSpawnRateDay>
+<foodSpawnRateDay>500</foodSpawnRateDay>
 </food>
 
 

@@ -13,6 +13,7 @@ class Person : public Object
 public:
     int personId;
     Date birthdate;
+    Date lastEaten;
     string name;
     Gender gender;
     bool pregnant;
@@ -29,6 +30,6 @@ public:
     Date babyBirthDate;
     Date pregnancyDate;
 
-    Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour);
+    Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour, Date lastEaten);
     string toString() const;
 };

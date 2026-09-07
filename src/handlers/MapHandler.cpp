@@ -85,5 +85,3 @@ void MapHandler::removeObjectCoordinate(const Object &o)
 {
   oCoordinates.erase(o.coordinate);
 }
-
-
