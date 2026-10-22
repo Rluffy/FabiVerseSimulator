@@ -1,87 +1,103 @@
-
 #include "../headers/MapHandler.h"
 
-using namespace std;
+#include <algorithm>
 
-MapHandler::MapHandler(MapConfig conf)
-    : conf(conf)
+MapHandler::MapHandler(MapConfig conf, Random &random)
+    : conf(conf),
+      random(random),
+      cells(static_cast<size_t>(conf.worldLength) * conf.worldWidth, nullptr)
 {
 }
 
-optional<Coordinate> MapHandler::getNextFreePostion()
+size_t MapHandler::indexOf(Coordinate c) const
 {
-  for (int x = 0; x < conf.worldLength; x++)
+  return static_cast<size_t>(c.x) * conf.worldWidth + c.y;
+}
+
+bool MapHandler::isInside(int x, int y) const
+{
+  return x >= 0 && x < conf.worldLength && y >= 0 && y < conf.worldWidth;
+}
+
+std::optional<Coordinate> MapHandler::findFreePosition()
+{
+  while (firstFreeIndex < cells.size() && cells[firstFreeIndex] != nullptr)
   {
-    for (int y = 0; y < conf.worldWidth; y++)
-    {
-      Coordinate cord = {x, y};
-      auto it = oCoordinates.find(cord);
-      // Free postion found
-      if (it == oCoordinates.end())
-      {
-        return cord;
-      }
-    }
+    firstFreeIndex++;
   }
-  return nullopt;
+
+  if (firstFreeIndex == cells.size())
+  {
+    return std::nullopt;
+  }
+
+  auto width = static_cast<size_t>(conf.worldWidth);
+  return Coordinate{static_cast<int>(firstFreeIndex / width), static_cast<int>(firstFreeIndex % width)};
 }
 
 bool MapHandler::moveObject(Object &o)
 {
-  int min = -1;
-  int max = 1;
-  int movePerhour = o.movementPerHour;
+  int step = o.movementPerHour;
+  Coordinate target = {
+      o.coordinate.x + random.range(-1, 1) * step,
+      o.coordinate.y + random.range(-1, 1) * step};
 
-  int xCordinate = o.coordinate.x;
-  int yCordinate = o.coordinate.y;
-
-  Coordinate newCoord;
-  // Some random movement must happen
-  do
+  // An axis that would leave the map keeps its old value
+  if (target.x < 0 || target.x >= conf.worldLength)
   {
-    int moveDirectionX = rand() % (max - min + 1) + min;
-    int moveDirectionY = rand() % (max - min + 1) + min;
-
-    xCordinate += movePerhour * moveDirectionX;
-    yCordinate += movePerhour * moveDirectionY;
-
-    if (xCordinate > conf.worldLength || xCordinate < 0)
-    {
-      xCordinate -= movePerhour * moveDirectionX;
-    }
-
-    if (yCordinate > conf.worldWidth || yCordinate < 0)
-    {
-      yCordinate -= movePerhour * moveDirectionY;
-    }
-
-    newCoord = {xCordinate, yCordinate};
-  } while (newCoord == o.coordinate);
-
-  // Only move person when cordinates are free
-  if (oCoordinates.find(newCoord) == oCoordinates.end())
+    target.x = o.coordinate.x;
+  }
+  if (target.y < 0 || target.y >= conf.worldWidth)
   {
-    updateObjectCoordinate(o, newCoord);
-    return true;
+    target.y = o.coordinate.y;
   }
 
-  return false;
+  if (target == o.coordinate || cells[indexOf(target)] != nullptr)
+  {
+    return false;
+  }
+
+  removeObject(o);
+  placeObject(o, target);
+  return true;
 }
 
-void MapHandler::updateObjectCoordinate(Object &o, Coordinate newCoord)
+void MapHandler::placeObject(Object &o, Coordinate newCoord)
 {
-  oCoordinates.erase(o.coordinate);
-  oCoordinates.insert({newCoord, &o});
+  cells[indexOf(newCoord)] = &o;
   o.coordinate = newCoord;
 }
 
-void MapHandler::insertObjectCoordinate(Object *oP, Coordinate newCoord)
+void MapHandler::removeObject(const Object &o)
 {
-  oCoordinates.insert({newCoord, oP});
-  oP->coordinate = newCoord;
+  size_t index = indexOf(o.coordinate);
+  cells[index] = nullptr;
+  firstFreeIndex = std::min(firstFreeIndex, index);
 }
 
-void MapHandler::removeObjectCoordinate(const Object &o)
+std::array<Object *, 8> MapHandler::getNeighbours(Coordinate c) const
 {
-  oCoordinates.erase(o.coordinate);
+  std::array<Object *, 8> neighbours{};
+  size_t count = 0;
+
+  for (int dx = -1; dx <= 1; dx++)
+  {
+    for (int dy = -1; dy <= 1; dy++)
+    {
+      if (dx == 0 && dy == 0)
+      {
+        continue;
+      }
+
+      int x = c.x + dx;
+      int y = c.y + dy;
+      if (isInside(x, y))
+      {
+        neighbours[count] = cells[indexOf({x, y})];
+      }
+      count++;
+    }
+  }
+
+  return neighbours;
 }

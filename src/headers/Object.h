@@ -1,16 +1,23 @@
-
 #pragma once
 
 #include "Coordinate.h"
 
+enum class ObjectKind
+{
+    Person,
+    Food
+};
+
 class Object
 {
 public:
-     Object(int id, int movementPerHour = 0);
+    Object(ObjectKind kind, int id, int movementPerHour = 0);
 
-     // for dynamic casting
-     virtual ~Object() = default;
-     int id;
-     int movementPerHour;
-     Coordinate coordinate;
+    // Virtual so that deleting through an Object pointer is always safe.
+    virtual ~Object() = default;
+
+    const ObjectKind kind;
+    int id;
+    int movementPerHour;
+    Coordinate coordinate;
 };

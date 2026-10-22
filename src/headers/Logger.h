@@ -1,10 +1,7 @@
 #pragma once
 
-#include <string>
-#include <iostream>
 #include <fstream>
-#include <filesystem>
-#include <cstdlib>
+#include <string>
 #include "TimeHandler.h"
 #include "../configs/LogConfig.h"
 
@@ -20,12 +17,13 @@ class Logger
 {
 public:
   Logger(LogConfig conf, TimeHandler &timeHandler);
-  void log(LogLevel logLevel, std::string message, bool printCurrentTime = false);
+  // Lets callers skip building expensive messages that would be dropped anyway
+  bool isEnabled(LogLevel logLevel) const;
+  void log(LogLevel logLevel, const std::string &message, bool printCurrentTime = false);
   void closeLogFile();
 
 private:
   std::ofstream logFile;
   LogConfig conf;
-  // std::filesystem::path path = std::filesystem::path(std::getenv("HOME")) / "logs";
   TimeHandler &timeHandler;
 };

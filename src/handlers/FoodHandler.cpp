@@ -10,15 +10,21 @@ void FoodHandler::spawnFood()
 {
     for (int i = 0; i < conf.foodSpawnRateDay; i++)
     {
-        auto cordO = mapHandler.getNextFreePostion();
+        auto cord = mapHandler.findFreePosition();
 
-        if (cordO)
+        // Map is full, no more food fits in
+        if (!cord)
         {
-            Food *fP = new Food("food");
-            mapHandler.insertObjectCoordinate(fP, *cordO);
+            break;
         }
-        else
-        {
-        }
+
+        Food *food = new Food();
+        mapHandler.placeObject(*food, *cord);
     }
+}
+
+void FoodHandler::consume(Food &food)
+{
+    mapHandler.removeObject(food);
+    delete &food;
 }

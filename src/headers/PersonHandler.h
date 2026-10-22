@@ -1,101 +1,68 @@
 #pragma once
 
+#include <memory>
+#include <string>
 #include <vector>
 #include "Person.h"
 #include "MapHandler.h"
 #include "TimeHandler.h"
-#include "../configs/PersonConfig.h"
 #include "Logger.h"
-#include <concepts>
-#include <algorithm>
-#include "Food.h"
+#include "Random.h"
+#include "FoodHandler.h"
+#include "../configs/PersonConfig.h"
 
 class PersonHandler
 {
-
 public:
-    PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, PersonConfig conf);
-    int getPersonsSize();
+    PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, Random &random, FoodHandler &foodHandler, PersonConfig conf);
     void preparePersons();
-    void simulatePersons();
-    void logPersonStatistics();
+    void simulateDay();
+    int getPersonsSize() const;
+    void logPersonStatistics() const;
 
 private:
-    vector<Person *> babiesP;
-    vector<Person *> personsP;
-    vector<Person *> deadPersonsP;
+    struct Statistics
+    {
+        int killed = 0;
+        int babies = 0;
+        int sex = 0;
+        int deaths = 0;
+        int starved = 0;
+    };
 
-    int nextPersonId;
-    int overallPersonsKilled;
-    int overallBabyCount;
-    int overallSexCount;
-    int overallDeathCount;
-    int overallStarvedCount;
+    // Owns every person, dead ones included, so parent pointers never dangle
+    std::vector<std::unique_ptr<Person>> allPersons;
+    std::vector<Person *> livingPersons;
+    std::vector<Person *> unbornPersons;
+    int nextPersonId = 0;
+    Statistics stats;
 
     PersonConfig conf;
     MapHandler &mapHandler;
     TimeHandler &timeHandler;
     Logger &logger;
+    Random &random;
+    FoodHandler &foodHandler;
+    bool debugEnabled;
 
-    void insertPerson(Person *pP, Coordinate cord);
-    void babyBirth(Person *bP);
-    Person *getReproductionPartner(const Person &p, const vector<Object *> &neighbsP);
-    Person *getVictim(const Person &p, vector<Object *> &neighsP);
-
-    template <typename O>
-    O *getFirstObject(vector<Object *> &objectsP, bool deleteObject = false)
-    {
-        auto oIt = std::find_if(objectsP.begin(), objectsP.end(), [&](Object *o)
-                                { return dynamic_cast<O *>(o) != nullptr; });
-
-        if (oIt != objectsP.end())
-        {
-            O *convOp = dynamic_cast<O *>(*oIt);
-            if (deleteObject)
-            {
-                objectsP.erase(oIt);
-            }
-            return convOp;
-        };
-
-        return nullptr;
-    }
-
-    template <typename O>
-    vector<O *> getSpecObjects(const vector<Object *> &objectsP)
-    {
-        vector<O *> convertObjsP;
-
-        for (auto oP : objectsP)
-        {
-            auto convObjP = dynamic_cast<O *>(oP);
-            if (convObjP)
-            {
-                convertObjsP.push_back(convObjP);
-            }
-        }
-
-        return convertObjsP;
-    };
-
-    std::vector<Person *>::iterator getUnbornBabyItByMother(const Person *person);
-    Gender getRandomGender();
+    Person &createPerson(int birthDay, Gender gender, int lastEatenDay);
+    Gender randomGender();
+    void lookAround(Person &p);
     void reproduce(Person &p1, Person &p2);
     void makePersonPregnant(Person &p);
     void processBirths();
-    void processDeads();
-    bool isReproductionPossible(const Person &p1, const Person &p2);
-    bool isRelated(const Person *p1P, const Person *p2P, int relLevel = 0);
-    bool isAdult(const Person &p);
-    bool isMurder(const Person &p);
-    bool isDying(const Person &p);
-    bool isDyingStarving(const Person &p);
-    bool isHungry(const Person &p);
-    void eat(Person &p, Food *food);
-    void dying(Person &p1, bool printLog = true);
-    bool getRandomMurderPersonality();
-    int getRandomDyingAge();
+    void babyBirth(Person &baby);
+    void removeDeadFromLiving();
     void killPerson(Person &murder, Person &victim);
+    void dying(Person &p, bool printLog = true);
     void dyingStarving(Person &p);
-    void lookAround(Person &p);
+    void eat(Person &p, Food &food);
+
+    bool isReproductionPossible(const Person &p1, const Person &p2) const;
+    bool isRelated(const Person *p1P, const Person *p2P, int curRelLevel = 0) const;
+    bool isAdult(const Person &p) const;
+    bool isHungry(const Person &p) const;
+    bool isDying(const Person &p) const;
+    bool isDyingStarving(const Person &p) const;
+    bool isMurder(const Person &p) const;
 };

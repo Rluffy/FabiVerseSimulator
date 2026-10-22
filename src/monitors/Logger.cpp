@@ -1,6 +1,4 @@
 #include "../headers/Logger.h"
-#include <iostream>
-#include <cstdlib>
 #include <ctime>
 
 Logger::Logger(LogConfig conf, TimeHandler &timeHandler)
@@ -10,14 +8,19 @@ Logger::Logger(LogConfig conf, TimeHandler &timeHandler)
   logFile.open(conf.path + "/" + conf.file, std::ios::out | (conf.rewrite ? std::ios::trunc : std::ios::app));
 }
 
-void Logger::log(LogLevel logLevel, std::string message, bool printCurrentTime)
+bool Logger::isEnabled(LogLevel logLevel) const
 {
-  const char *levelName;
+  return logLevel >= conf.minLogLevel;
+}
 
-  if (logLevel < conf.minLogLevel)
+void Logger::log(LogLevel logLevel, const std::string &message, bool printCurrentTime)
+{
+  if (!isEnabled(logLevel))
   {
     return;
   }
+
+  const char *levelName;
 
   switch (logLevel)
   {
@@ -42,11 +45,12 @@ void Logger::log(LogLevel logLevel, std::string message, bool printCurrentTime)
 
   if (printCurrentTime)
   {
-    time_t timestamp;
-    time(&timestamp);
-    logFile << " Current Time " << ctime(&timestamp);
+    std::time_t timestamp = std::time(nullptr);
+    logFile << " Current Time " << std::ctime(&timestamp);
   }
-  logFile << std::endl;
+
+  // '\n' instead of std::endl: endl flushes the file on every line
+  logFile << '\n';
 }
 
 void Logger::closeLogFile()

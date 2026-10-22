@@ -1,7 +1,6 @@
 #include "../headers/Food.h"
 
-Food::Food(string foodName)
-    : Object(0),
-      foodName(foodName)
+Food::Food()
+    : Object(ObjectKind::Food, 0)
 {
 }

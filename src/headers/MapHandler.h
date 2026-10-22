@@ -1,62 +1,36 @@
 #pragma once
 
-#include "Coordinate.h"
-#include "Person.h"
-#include "Object.h"
-#include <map>
-#include <vector>
-#include "../configs/MapConfig.h"
+#include <array>
+#include <cstddef>
 #include <optional>
-#include <concepts>
+#include <vector>
+#include "Coordinate.h"
+#include "Object.h"
+#include "Random.h"
+#include "../configs/MapConfig.h"
 
 class MapHandler
 {
 public:
-   MapHandler(MapConfig conf);
+   MapHandler(MapConfig conf, Random &random);
+
+   // First free cell in row-major order, nothing when the map is full
+   std::optional<Coordinate> findFreePosition();
+   // One random step of movementPerHour cells. Moves only onto a free cell.
    bool moveObject(Object &o);
-   void updateObjectCoordinate(Object &o, Coordinate newCoord);
-   void insertObjectCoordinate(Object *oP, Coordinate newCoord);
-   void removeObjectCoordinate(const Object &o);
-   std::optional<Coordinate> getNextFreePostion();
-
-   template <typename O>
-   vector<O *> getObjectNeighbours(const Object &o)
-   {
-      vector<O *> objectsP;
-
-      int xP = o.coordinate.x;
-      int yP = o.coordinate.y;
-      int xNextPos, yNextPos;
-
-      for (int x = -1; x < 2; x++)
-      {
-         xNextPos = xP + x;
-         for (int y = -1; y < 2; y++)
-         {
-            // Skip same position
-            if (x == 0 && y == 0)
-            {
-               continue;
-            }
-            yNextPos = yP + y;
-
-            auto it = oCoordinates.find({xNextPos, yNextPos});
-            // neighbour found
-            if (it != oCoordinates.end() && it->second)
-            {
-               O *neighbour = dynamic_cast<O *>(it->second);
-               if (neighbour)
-               {
-                  objectsP.push_back(neighbour);
-               }
-            }
-         }
-      }
-      return objectsP;
-   };
+   void placeObject(Object &o, Coordinate newCoord);
+   void removeObject(const Object &o);
+   // The eight surrounding cells, nullptr where there is no object or no cell
+   std::array<Object *, 8> getNeighbours(Coordinate c) const;
 
    MapConfig conf;
 
 private:
-   std::map<Coordinate, Object *> oCoordinates;
+   size_t indexOf(Coordinate c) const;
+   bool isInside(int x, int y) const;
+
+   Random &random;
+   std::vector<Object *> cells;
+   // All cells before this index are occupied, so the free search starts here
+   size_t firstFreeIndex = 0;
 };

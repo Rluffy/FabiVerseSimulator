@@ -1,0 +1,83 @@
+#include "ConfigLoader.h"
+
+#include <iostream>
+#include <stdexcept>
+#include "../pugixml/pugixml.hpp"
+
+Config loadConfig(const std::string &path)
+{
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(path.c_str());
+
+    if (result.status != pugi::status_ok)
+    {
+        throw std::runtime_error("Error opening config file " + path + ": " + result.description());
+    }
+
+    auto confNode = doc.child("config");
+
+    // World config
+    auto worldNode = confNode.child("world");
+    WorldConfig worldConf;
+    worldConf.simDurationDays = worldNode.child("simDurationDays").text().as_int();
+
+    // Log config
+    auto logNode = confNode.child("log");
+    LogConfig logConf;
+    logConf.file = logNode.child("file").text().as_string();
+    logConf.path = logNode.child("path").text().as_string();
+    logConf.rewrite = logNode.child("rewrite").text().as_bool();
+    logConf.minLogLevel = logNode.child("minLogLevel").text().as_int();
+
+    // Person config
+    auto personNode = confNode.child("person");
+    PersonConfig persConf;
+    persConf.startPersonCount = personNode.child("startPersonCount").text().as_int();
+    persConf.pregTimeMonths = personNode.child("pregTimeMonths").text().as_int();
+    persConf.relLevel = personNode.child("relLevel").text().as_int();
+    persConf.adultAgeYears = personNode.child("adultAgeYears").text().as_int();
+    persConf.maleProbability = personNode.child("maleProbability").text().as_int();
+    persConf.murderProbability = personNode.child("murderProbability").text().as_int();
+    persConf.minDyingAge = personNode.child("minDyingAge").text().as_int();
+    persConf.maxDyingAge = personNode.child("maxDyingAge").text().as_int();
+    persConf.movementPerHour = personNode.child("movementPerHour").text().as_int();
+    persConf.hungryStartDays = personNode.child("hungryStartDays").text().as_int();
+    persConf.hungryDeathDays = personNode.child("hungryDeathDays").text().as_int();
+
+    // Time config, format DDMMYYYY
+    auto timeNode = confNode.child("time");
+    TimeConfig timeConf;
+    std::string timeStr = timeNode.child("startDate").text().as_string();
+
+    if (timeStr.empty())
+    {
+        timeStr = "08092003";
+        std::cerr << "Empty TimeString, using " << timeStr << std::endl;
+    }
+    int day = std::stoi(timeStr.substr(0, 2));
+    int month = std::stoi(timeStr.substr(2, 2));
+    int year = std::stoi(timeStr.substr(4, 4));
+
+    timeConf.startDate = {day, month, year};
+
+    // Map config
+    auto mapNode = confNode.child("map");
+    MapConfig mapConf;
+    mapConf.worldLength = mapNode.child("worldLength").text().as_int();
+    mapConf.worldWidth = mapNode.child("worldWidth").text().as_int();
+
+    // Food config
+    auto foodNode = confNode.child("food");
+    FoodConfig foodConf;
+    foodConf.foodSpawnRateDay = foodNode.child("foodSpawnRateDay").text().as_int();
+
+    Config conf;
+    conf.worldConfig = worldConf;
+    conf.logConfig = logConf;
+    conf.personConfig = persConf;
+    conf.timeConfig = timeConf;
+    conf.mapConfig = mapConf;
+    conf.foodConfig = foodConf;
+
+    return conf;
+}

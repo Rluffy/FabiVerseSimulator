@@ -1,8 +1,7 @@
 #include "../headers/Date.h"
-#include <iostream>
-#include <string>
-#include <sstream>
+#include <chrono>
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -79,42 +78,31 @@ void Date::addMonths(int months)
 void Date::addYears(int years)
 {
     year += years;
+
+    // Keep 29.02. valid when the target year is not a leap year.
+    int maxDay = daysInMonth(month, year);
+
+    if (day > maxDay)
+        day = maxDay;
 }
 
-void Date::addDays(int days)
+int Date::toDayNumber() const
 {
-    while (days > 0)
-    {
-        nextDay();
-        days--;
-    }
+    const std::chrono::year_month_day ymd{
+        std::chrono::year{year},
+        std::chrono::month{static_cast<unsigned>(month)},
+        std::chrono::day{static_cast<unsigned>(day)}};
+
+    return static_cast<int>(static_cast<std::chrono::sys_days>(ymd).time_since_epoch().count());
 }
 
-bool Date::isBiggerOrEquals(Date &other)
+Date Date::fromDayNumber(int dayNumber)
 {
-    if (year != other.year)
-    {
-        return year >= other.year;
-    }
-    else if (month != other.month)
-    {
-        return month >= other.month;
-    }
-    else
-    {
-        return day >= other.day;
-    }
-}
+    const std::chrono::year_month_day ymd{std::chrono::sys_days{std::chrono::days{dayNumber}}};
 
-bool Date::operator>=(const Date &other) const
-{
-    if (year != other.year)
-        return year >= other.year;
-
-    if (month != other.month)
-        return month >= other.month;
-
-    return day >= other.day;
+    return {static_cast<int>(static_cast<unsigned>(ymd.day())),
+            static_cast<int>(static_cast<unsigned>(ymd.month())),
+            static_cast<int>(ymd.year())};
 }
 
 string Date::toDateString() const

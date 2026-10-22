@@ -1,30 +1,20 @@
 #include "../headers/Person.h"
-#include <cstdlib>
+#include "../headers/Date.h"
 
-Person::Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour, Date lastEaten)
-    : Object(personId, movementPerHour),
-      personId(personId),
-      birthdate(birthdate),
-      name(name),
-      gender(gender),
-      pregnant(false),
-      murder(false),
-      motherP(nullptr),
-      father(nullptr),
-      murderCount(0),
-      babyCount(0),
-      sexCount(0),
-      babyBirthDate{0, 0, 0},
-      pregnancyDate{0, 0, 0},
-      lastEaten(lastEaten),
-      dyingAge(dyingAge)
-
+Person::Person(int id, int birthDay, int adultDay, int dyingDay, int dyingAge, Gender gender, int movementPerHour, int lastEatenDay)
+    : Object(ObjectKind::Person, id, movementPerHour),
+      birthDay(birthDay),
+      adultDay(adultDay),
+      dyingDay(dyingDay),
+      dyingAge(dyingAge),
+      lastEatenDay(lastEatenDay),
+      gender(gender)
 {
 }
-string Person::toString() const
+
+std::string Person::toString() const
 {
-  return "Person personId: " + to_string(this->personId) +
-         " Birthdate: " + this->birthdate.toDateString() +
-         " Gender: " + (this->gender == Gender::Male ? " M " : " F ") +
-         " Name: " + this->name;
+    return "Person personId: " + std::to_string(id) +
+           " Birthdate: " + Date::fromDayNumber(birthDay).toDateString() +
+           " Gender: " + (gender == Gender::Male ? " M " : " F ");
 }

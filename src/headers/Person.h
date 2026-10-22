@@ -1,35 +1,28 @@
-#include <iostream>
-#include <string>
-#include "Date.h"
-#include "Gender.h"
-#include "Coordinate.h"
-#include "Object.h"
-
 #pragma once
-using namespace std;
+
+#include <string>
+#include "Gender.h"
+#include "Object.h"
 
 class Person : public Object
 {
 public:
-    int personId;
-    Date birthdate;
-    Date lastEaten;
-    string name;
-    Gender gender;
-    bool pregnant;
-    bool murder;
-    bool dead;
+    // Day values are days since 1970-01-01, see Date::toDayNumber()
+    Person(int id, int birthDay, int adultDay, int dyingDay, int dyingAge, Gender gender, int movementPerHour, int lastEatenDay);
+    std::string toString() const;
 
-    Person *motherP;
-    Person *father;
-
-    int murderCount;
-    int babyCount;
-    int sexCount;
+    int birthDay;
+    int adultDay;
+    int dyingDay;
     int dyingAge;
-    Date babyBirthDate;
-    Date pregnancyDate;
+    int lastEatenDay;
+    // Only meaningful while pregnant
+    int babyBirthDay = 0;
+    Gender gender;
+    bool pregnant = false;
+    bool murder = false;
+    bool dead = false;
 
-    Person(int personId, Date birthdate, string name, Gender gender, int dyingAge, int movementPerHour, Date lastEaten);
-    string toString() const;
+    Person *motherP = nullptr;
+    Person *father = nullptr;
 };

@@ -6,21 +6,25 @@
 #include "PersonHandler.h"
 #include "FoodHandler.h"
 #include "Logger.h"
+#include "Random.h"
 #include "../configs/Config.h"
 
 class WorldHandler
 {
 public:
-   WorldHandler(Config conf);
+   explicit WorldHandler(Config conf);
    void startSimulation();
 
 private:
    void simulateDay();
    void prepareSimulation();
-   PersonHandler ph;
+
+   // Members are initialised in declaration order: every dependency comes before its users
+   Random random;
    TimeHandler th;
    MapHandler mh;
    Logger logger;
-   WorldConfig conf;
    FoodHandler fh;
+   PersonHandler ph;
+   WorldConfig conf;
 };

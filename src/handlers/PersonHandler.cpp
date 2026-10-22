@@ -2,18 +2,25 @@
 
 #include <algorithm>
 
-PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, PersonConfig conf)
-    : mapHandler(mapHandler),
+namespace
+{
+// Day number of the day a person reaches the given age
+int dayAfterYears(int birthDay, int years)
+{
+    Date date = Date::fromDayNumber(birthDay);
+    date.addYears(years);
+    return date.toDayNumber();
+}
+}
+
+PersonHandler::PersonHandler(MapHandler &mapHandler, TimeHandler &timeHandler, Logger &logger, Random &random, FoodHandler &foodHandler, PersonConfig conf)
+    : conf(conf),
+      mapHandler(mapHandler),
       timeHandler(timeHandler),
       logger(logger),
-      conf(conf),
-      nextPersonId(0),
-      overallPersonsKilled(0),
-      overallBabyCount(0),
-      overallSexCount(0),
-      overallDeathCount(0),
-      overallStarvedCount(0)
-
+      random(random),
+      foodHandler(foodHandler),
+      debugEnabled(logger.isEnabled(LogLevel::DEBUG))
 {
 }
 
@@ -21,42 +28,49 @@ void PersonHandler::preparePersons()
 {
   logger.log(LogLevel::INFO, "[PREP] Prepare Persons");
 
+  const int birthDay = Date{1, 1, 1990}.toDayNumber();
+
   for (int i = 0; i < conf.startPersonCount; i++)
   {
-    nextPersonId++;
-    Person *pP = new Person(nextPersonId, {1, 1, 1990}, to_string(nextPersonId), getRandomGender(), getRandomDyingAge(), conf.movementPerHour, timeHandler.currentDate);
-    auto cord = mapHandler.getNextFreePostion();
-    if (cord)
+    auto cord = mapHandler.findFreePosition();
+    if (!cord)
     {
-      insertPerson(pP, *cord);
-      logger.log(LogLevel::DEBUG, "[PREP] Added " + pP->toString());
+      break;
+    }
+
+    Person &person = createPerson(birthDay, randomGender(), timeHandler.currentDay);
+    livingPersons.push_back(&person);
+    mapHandler.placeObject(person, *cord);
+
+    if (debugEnabled)
+    {
+      logger.log(LogLevel::DEBUG, "[PREP] Added " + person.toString());
     }
   }
 }
 
-void PersonHandler::simulatePersons()
+void PersonHandler::simulateDay()
 {
-  for (int i = 0; i < 24; i++)
+  for (int hour = 0; hour < 24; hour++)
   {
-    for (auto personP : personsP)
+    for (Person *personP : livingPersons)
     {
       Person &person = *personP;
-      // skip if persons alread set dead
+
+      // Can be killed earlier in this hour
       if (person.dead)
       {
         continue;
       }
 
-      // move persons
       bool moved = mapHandler.moveObject(person);
-      if (!moved)
+      if (!moved && debugEnabled)
       {
-        logger.log(LogLevel::DEBUG, "[MOVED] personId: " + to_string(person.personId) + " not moved");
+        logger.log(LogLevel::DEBUG, "[MOVED] personId: " + std::to_string(person.id) + " not moved");
       }
 
       lookAround(person);
 
-      // check if persons die age
       if (isDying(person))
       {
         dying(person);
@@ -68,201 +82,196 @@ void PersonHandler::simulatePersons()
     }
   }
 
-  processDeads();
+  removeDeadFromLiving();
   processBirths();
 }
 
-void PersonHandler::insertPerson(Person *pP, Coordinate cord)
+int PersonHandler::getPersonsSize() const
 {
-  mapHandler.insertObjectCoordinate(pP, cord);
-  personsP.push_back(pP);
+  return static_cast<int>(livingPersons.size());
 }
 
-void PersonHandler::babyBirth(Person *babyP)
+Person &PersonHandler::createPerson(int birthDay, Gender gender, int lastEatenDay)
 {
-  Person *motherP = babyP->motherP;
-  if (motherP)
+  const int dyingAge = random.range(conf.minDyingAge, conf.maxDyingAge);
+
+  allPersons.push_back(std::make_unique<Person>(
+      ++nextPersonId,
+      birthDay,
+      dayAfterYears(birthDay, conf.adultAgeYears),
+      dayAfterYears(birthDay, dyingAge),
+      dyingAge,
+      gender,
+      conf.movementPerHour,
+      lastEatenDay));
+
+  return *allPersons.back();
+}
+
+Gender PersonHandler::randomGender()
+{
+  return random.percent(conf.maleProbability) ? Gender::Male : Gender::Female;
+}
+
+void PersonHandler::lookAround(Person &p)
+{
+  const auto neighbours = mapHandler.getNeighbours(p.coordinate);
+
+  if (isMurder(p))
   {
-    motherP->pregnant = false;
-
-    // find free coordinates
-    auto birthLocationO = mapHandler.getNextFreePostion();
-
-    // Baby only born when free space found
-    if (birthLocationO)
+    for (Object *o : neighbours)
     {
-      string babyMurderText = "";
-      // baby become a murder in future
-      if (getRandomMurderPersonality())
+      if (o && o->kind == ObjectKind::Person)
       {
-        babyMurderText = " murder";
-        babyP->murder = true;
+        auto *victimP = static_cast<Person *>(o);
+        if (!victimP->dead)
+        {
+          killPerson(p, *victimP);
+          break;
+        }
       }
-
-      insertPerson(babyP, *birthLocationO);
-
-      motherP->babyCount++;
-      overallBabyCount++;
-      logger.log(LogLevel::INFO, "[BIRTH] personId: " + to_string(babyP->personId) + " birthdate: " + babyP->birthdate.toDateString() + " mother personId: " + to_string(babyP->motherP->personId) + " father personId: " + to_string(babyP->father->personId) + babyMurderText);
-    }
-    else
-    {
-      logger.log(LogLevel::WARNING, "[BIRTH] Field is full, person count: " + to_string(personsP.size()));
-      delete babyP;
     }
   }
-}
 
-Person *PersonHandler::getReproductionPartner(const Person &p, const vector<Object *> &neighbsP)
-{
-  vector<Person *> personNeighbsP = getSpecObjects<Person>(neighbsP);
-
-  for (auto neighbP : personNeighbsP)
+  if (isHungry(p))
   {
-    if (isReproductionPossible(p, *neighbP))
+    for (Object *o : neighbours)
     {
-      return neighbP;
+      if (o && o->kind == ObjectKind::Food)
+      {
+        eat(p, *static_cast<Food *>(o));
+        return;
+      }
     }
   }
-  return nullptr;
-}
 
-Person *PersonHandler::getVictim(const Person &p, vector<Object *> &neighsP)
-{
-  Person *victimP = getFirstObject<Person>(neighsP, true);
-
-  if (victimP)
+  for (Object *o : neighbours)
   {
-    return victimP;
-  }
+    if (!o || o->kind != ObjectKind::Person)
+    {
+      continue;
+    }
 
-  return nullptr;
+    auto *partnerP = static_cast<Person *>(o);
+    if (!partnerP->dead && isReproductionPossible(p, *partnerP))
+    {
+      reproduce(p, *partnerP);
+      return;
+    }
+  }
 }
 
 void PersonHandler::reproduce(Person &p1, Person &p2)
 {
-  Date birthDate;
+  bool p1IsMother = p1.gender == Gender::Female;
+  Person &mother = p1IsMother ? p1 : p2;
+  Person &father = p1IsMother ? p2 : p1;
 
-  Person *fatherP;
-  Person *motherP;
+  makePersonPregnant(mother);
 
-  if (p1.gender == Gender::Female)
-  {
-    makePersonPregnant(p1);
-    birthDate = p1.babyBirthDate;
-    motherP = &p1;
-    fatherP = &p2;
-  }
-  else if (p2.gender == Gender::Female)
-  {
-    makePersonPregnant(p2);
-    birthDate = p2.babyBirthDate;
-    motherP = &p2;
-    fatherP = &p1;
-  }
+  Person &baby = createPerson(mother.babyBirthDay, randomGender(), timeHandler.currentDay);
+  baby.motherP = &mother;
+  baby.father = &father;
+  unbornPersons.push_back(&baby);
 
-  // create baby
-  Gender babyGender = getRandomGender();
-  int dyingAge = getRandomDyingAge();
-  Person *baby = new Person(++nextPersonId, birthDate, to_string(nextPersonId), babyGender, dyingAge, conf.movementPerHour, timeHandler.currentDate);
-  baby->father = fatherP;
-  baby->motherP = motherP;
-  babiesP.push_back(baby);
-
-  logger.log(LogLevel::INFO, "[SEX][PREGNANT] embryo id: " + to_string(baby->personId) + " birthdate: " + birthDate.toDateString() +
-                                 " mother personId: " +
-                                 to_string(motherP->personId) + " father personId: " + to_string(fatherP->personId));
-  p1.sexCount++;
-  p2.sexCount++;
-  overallSexCount++;
-}
-
-void PersonHandler::processBirths()
-{
-  vector<Person *> unbornBabiesP;
-  for (auto babieP : babiesP)
-  {
-    bool birthTime = timeHandler.currentDate >= babieP->birthdate;
-    if (birthTime)
-    {
-      babyBirth(babieP);
-    }
-    else
-    {
-      unbornBabiesP.push_back(babieP);
-    }
-  }
-  babiesP = unbornBabiesP;
-}
-
-void PersonHandler::processDeads()
-{
-  vector<Person *> undeadPersonsP;
-  for (Person *personP : personsP)
-  {
-    if (personP->dead)
-    {
-      deadPersonsP.push_back(personP);
-    }
-    else
-    {
-      undeadPersonsP.push_back(personP);
-    }
-  }
-
-  personsP = undeadPersonsP;
+  logger.log(LogLevel::INFO, "[SEX][PREGNANT] embryo id: " + std::to_string(baby.id) +
+                                 " birthdate: " + Date::fromDayNumber(baby.birthDay).toDateString() +
+                                 " mother personId: " + std::to_string(mother.id) +
+                                 " father personId: " + std::to_string(father.id));
+  stats.sex++;
 }
 
 void PersonHandler::makePersonPregnant(Person &p)
 {
+  Date birthDate = Date::fromDayNumber(timeHandler.currentDay);
+  birthDate.addMonths(conf.pregTimeMonths);
+
   p.pregnant = true;
-  p.pregnancyDate = timeHandler.currentDate;
-  p.babyBirthDate = timeHandler.currentDate;
-  p.babyBirthDate.addMonths(conf.pregTimeMonths);
+  p.babyBirthDay = birthDate.toDayNumber();
 }
 
-bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2)
+void PersonHandler::processBirths()
 {
+  std::erase_if(unbornPersons, [this](Person *babyP)
+                {
+    if (babyP->birthDay > timeHandler.currentDay)
+    {
+      return false;
+    }
+    babyBirth(*babyP);
+    return true; });
+}
 
-  // Different sex, female not pregnant, not related
-  if (isRelated(&p1, &p2))
+void PersonHandler::babyBirth(Person &baby)
+{
+  Person *motherP = baby.motherP;
+  motherP->pregnant = false;
+
+  auto cord = mapHandler.findFreePosition();
+  if (!cord)
   {
-    logger.log(LogLevel::DEBUG, "[SEX][RELATED] personId: " + to_string(p1.personId) + " is releated to" + " personId: " + to_string(p2.personId));
+    logger.log(LogLevel::WARNING, "[BIRTH] Field is full, person count: " + std::to_string(livingPersons.size()));
+    baby.dead = true;
+    return;
+  }
+
+  std::string murderText;
+  if (random.percent(conf.murderProbability))
+  {
+    baby.murder = true;
+    murderText = " murder";
+  }
+
+  livingPersons.push_back(&baby);
+  mapHandler.placeObject(baby, *cord);
+  stats.babies++;
+
+  logger.log(LogLevel::INFO, "[BIRTH] personId: " + std::to_string(baby.id) +
+                                 " birthdate: " + Date::fromDayNumber(baby.birthDay).toDateString() +
+                                 " mother personId: " + std::to_string(motherP->id) +
+                                 " father personId: " + std::to_string(baby.father->id) + murderText);
+}
+
+void PersonHandler::removeDeadFromLiving()
+{
+  std::erase_if(livingPersons, [](const Person *p)
+                { return p->dead; });
+}
+
+bool PersonHandler::isReproductionPossible(const Person &p1, const Person &p2) const
+{
+  // Different sex, neither one pregnant
+  if (p1.gender == p2.gender || p1.pregnant || p2.pregnant)
+  {
     return false;
   }
 
   if (!isAdult(p1) || !isAdult(p2))
   {
-    logger.log(LogLevel::DEBUG, "[SEX][UNDERAGE] personId: " + to_string(p1.personId) + " or personId: " + to_string(p2.personId) + " not adult");
     return false;
   }
-  return p1.gender != p2.gender && !p1.pregnant && !p2.pregnant;
+
+  return !isRelated(&p1, &p2);
 }
 
-bool PersonHandler::isRelated(const Person *p1P, const Person *p2P, int curRelLevel)
+bool PersonHandler::isRelated(const Person *p1P, const Person *p2P, int curRelLevel) const
 {
-  Person *m1P = p1P->motherP;
-  Person *f1P = p1P->father;
-  Person *m2P = p2P->motherP;
-  Person *f2P = p2P->father;
+  const Person *m1P = p1P->motherP;
+  const Person *f1P = p1P->father;
+  const Person *m2P = p2P->motherP;
+  const Person *f2P = p2P->father;
 
-  // Check if persons are parent and kid (checks should be valid event if no parents)
+  // Parent and child (checked even when a parent is unknown)
   if (m1P == p2P || m2P == p1P)
     return true;
   if (f1P == p2P || f2P == p1P)
     return true;
 
-  // skip parent checks when no parents
-  // either persons has parents or no one
+  // Siblings, only when both parents are known
   if (m1P && f1P && m2P && f2P)
   {
-    // Check if persons are siblings
     if (m1P == m2P || f1P == f2P)
       return true;
-  }
-  else
-  {
-    logger.log(LogLevel::DEBUG, "[RELATED] Skipped for personId: " + to_string(p1P->personId) + " and personId: " + to_string(p2P->personId) + ", no parents");
   }
 
   // for example 0 < 1
@@ -286,192 +295,101 @@ bool PersonHandler::isRelated(const Person *p1P, const Person *p2P, int curRelLe
   return false;
 }
 
-vector<Person *>::iterator PersonHandler::getUnbornBabyItByMother(const Person *mP)
-{
-  auto babyIt = std::find_if(babiesP.begin(), babiesP.end(), [&](const Person *p)
-                             { return p->motherP == mP; });
-
-  return babyIt;
-}
-
-Gender PersonHandler::getRandomGender()
-{
-  // probabitly in % to be a male
-  return (rand() % 100 + 1) <= conf.maleProbability ? Gender::Male : Gender::Female;
-}
-
-bool PersonHandler::isAdult(const Person &p1)
-{
-  Date adultDate = p1.birthdate;
-  adultDate.addYears(conf.adultAgeYears);
-
-  if (timeHandler.currentDate >= adultDate)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-bool PersonHandler::getRandomMurderPersonality()
-{
-  // probabitly in % to be a murder in future
-  return (rand() % 100 + 1) <= conf.murderProbability;
-}
-
-bool PersonHandler::isMurder(const Person &p1)
-{
-  // person is only murder when he is adult
-  return p1.murder && isAdult(p1);
-}
-
 void PersonHandler::killPerson(Person &murder, Person &victim)
 {
-  string babyVictimText = "";
+  std::string unbornText;
 
   if (victim.pregnant)
   {
-    // also baby will die
-    auto babyIt = getUnbornBabyItByMother(&victim);
-    if (babyIt != babiesP.end())
+    // The unborn baby dies with its mother
+    auto babyIt = std::find_if(unbornPersons.begin(), unbornPersons.end(), [&victim](const Person *babyP)
+                               { return babyP->motherP == &victim; });
+
+    if (babyIt != unbornPersons.end())
     {
-      Person *pB = *babyIt;
-      babyVictimText = " Unborn baby, personId: " + to_string(pB->personId) + " also killed";
-      babiesP.erase(babyIt);
-      delete pB;
-      overallDeathCount++;
-      overallPersonsKilled++;
+      Person *babyP = *babyIt;
+      unbornPersons.erase(babyIt);
+      babyP->dead = true;
+      unbornText = " Unborn baby, personId: " + std::to_string(babyP->id) + " also killed";
+      stats.deaths++;
+      stats.killed++;
     }
   }
 
-  logger.log(LogLevel::INFO, "[DEATH][MURDER] personId: " + to_string(murder.personId) + " killed victim personId: " +
-                                 to_string(victim.personId) + babyVictimText);
-  murder.murderCount++;
-  overallPersonsKilled++;
+  logger.log(LogLevel::INFO, "[DEATH][MURDER] personId: " + std::to_string(murder.id) +
+                                 " killed victim personId: " + std::to_string(victim.id) + unbornText);
+  stats.killed++;
 
   dying(victim, false);
 }
 
 void PersonHandler::dyingStarving(Person &p)
 {
-  logger.log(LogLevel::INFO, "[DEATH][EAT] personId: " + to_string(p.personId) + " starved last eaten: " +
-                                 p.lastEaten.toDateString());
+  logger.log(LogLevel::INFO, "[DEATH][EAT] personId: " + std::to_string(p.id) +
+                                 " starved last eaten: " + Date::fromDayNumber(p.lastEatenDay).toDateString());
 
-  overallStarvedCount++;
+  stats.starved++;
   dying(p, false);
 }
 
-void PersonHandler::dying(Person &p1, bool printLog)
+void PersonHandler::dying(Person &p, bool printLog)
 {
-  p1.dead = true;
-  mapHandler.removeObjectCoordinate(p1);
+  p.dead = true;
+  mapHandler.removeObject(p);
+
   if (printLog)
   {
-
-    logger.log(LogLevel::INFO, "[DEATH] personId: " + to_string(p1.personId) + " died at age: " +
-                                   to_string(p1.dyingAge));
+    logger.log(LogLevel::INFO, "[DEATH] personId: " + std::to_string(p.id) +
+                                   " died at age: " + std::to_string(p.dyingAge));
   }
-  overallDeathCount++;
+
+  stats.deaths++;
 }
 
-int PersonHandler::getRandomDyingAge()
+bool PersonHandler::isAdult(const Person &p) const
 {
-  return conf.minDyingAge + rand() % (conf.maxDyingAge - conf.minDyingAge + 1);
+  return timeHandler.currentDay >= p.adultDay;
 }
 
-bool PersonHandler::isDying(const Person &p1)
+bool PersonHandler::isMurder(const Person &p) const
 {
-  Date dyingDate = p1.birthdate;
-  dyingDate.addYears(p1.dyingAge);
+  // A murder personality only acts once the person is an adult
+  return p.murder && isAdult(p);
+}
 
-  if (timeHandler.currentDate >= dyingDate)
+bool PersonHandler::isHungry(const Person &p) const
+{
+  return timeHandler.currentDay >= p.lastEatenDay + conf.hungryStartDays;
+}
+
+bool PersonHandler::isDying(const Person &p) const
+{
+  return timeHandler.currentDay >= p.dyingDay;
+}
+
+bool PersonHandler::isDyingStarving(const Person &p) const
+{
+  return timeHandler.currentDay >= p.lastEatenDay + conf.hungryDeathDays;
+}
+
+void PersonHandler::eat(Person &p, Food &food)
+{
+  foodHandler.consume(food);
+  p.lastEatenDay = timeHandler.currentDay;
+
+  if (debugEnabled)
   {
-    return true;
-  }
-
-  return false;
-}
-
-bool PersonHandler::isDyingStarving(const Person &p1)
-{
-  Date starvedDate = p1.lastEaten;
-  starvedDate.addDays(conf.hungryDeathDays);
-
-  if (timeHandler.currentDate >= starvedDate)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-void PersonHandler::lookAround(Person &p)
-{
-  auto neighbsP = mapHandler.getObjectNeighbours<Object>(p);
-
-  if (isMurder(p))
-  {
-    Person *victimP = getVictim(p, neighbsP);
-    if (victimP)
-    {
-      killPerson(p, *victimP);
-    }
-  }
-
-  if (isHungry(p))
-  {
-    // Get food
-    Food *foodP = getFirstObject<Food>(neighbsP, false);
-    if (foodP)
-    {
-      eat(p, foodP);
-      return;
-    }
-  }
-
-  // Check for reproduction partner
-  Person *repPartnerP = getReproductionPartner(p, neighbsP);
-  // Only reproduce if found
-  if (repPartnerP)
-  {
-    reproduce(p, *repPartnerP);
+    logger.log(LogLevel::DEBUG, "[EAT] personId: " + std::to_string(p.id) + " eats food");
   }
 }
 
-bool PersonHandler::isHungry(const Person &p)
+void PersonHandler::logPersonStatistics() const
 {
-
-  Date hungryDate = p.lastEaten;
-  hungryDate.addDays(conf.hungryStartDays);
-
-  if (timeHandler.currentDate >= hungryDate)
-  {
-    return true;
-  }
-
-  return false;
-}
-
-void PersonHandler::eat(Person &p, Food *foodP)
-{
-  mapHandler.removeObjectCoordinate(*foodP);
-  delete foodP;
-  p.lastEaten = timeHandler.currentDate;
-  logger.log(LogLevel::DEBUG, "[EAT] id " + to_string(p.id) + " eats food");
-}
-
-void PersonHandler::logPersonStatistics()
-{
-  logger.log(LogLevel::INFO, "[STATS] Current person count: " + to_string(personsP.size()));
-  logger.log(LogLevel::INFO, "[STATS] Overall persons killed count: " + to_string(overallPersonsKilled));
-  logger.log(LogLevel::INFO, "[STATS] Overall babies born count: " + to_string(overallBabyCount));
-  logger.log(LogLevel::INFO, "[STATS] Overall sex count: " + to_string(overallSexCount));
-  logger.log(LogLevel::INFO, "[STATS] Overall persons lived count: " + to_string(overallBabyCount + conf.startPersonCount));
-  logger.log(LogLevel::INFO, "[STATS] Overall persons died count: " + to_string(overallDeathCount));
-  logger.log(LogLevel::INFO, "[STATS] Overall persons starved count: " + to_string(overallStarvedCount));
-}
-
-int PersonHandler::getPersonsSize()
-{
-  return personsP.size();
+  logger.log(LogLevel::INFO, "[STATS] Current person count: " + std::to_string(livingPersons.size()));
+  logger.log(LogLevel::INFO, "[STATS] Overall persons killed count: " + std::to_string(stats.killed));
+  logger.log(LogLevel::INFO, "[STATS] Overall babies born count: " + std::to_string(stats.babies));
+  logger.log(LogLevel::INFO, "[STATS] Overall sex count: " + std::to_string(stats.sex));
+  logger.log(LogLevel::INFO, "[STATS] Overall persons lived count: " + std::to_string(stats.babies + conf.startPersonCount));
+  logger.log(LogLevel::INFO, "[STATS] Overall persons died count: " + std::to_string(stats.deaths));
+  logger.log(LogLevel::INFO, "[STATS] Overall persons starved count: " + std::to_string(stats.starved));
 }

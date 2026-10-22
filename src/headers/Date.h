@@ -11,9 +11,9 @@ struct Date
     void nextDay();
     void addMonths(int months);
     void addYears(int years);
-    void addDays(int days);
     std::string toDateString() const;
 
-    bool isBiggerOrEquals(Date &other);
-    bool operator>=(const Date &other) const;
+    // Days since 1970-01-01. The simulation compares dates as these plain integers.
+    int toDayNumber() const;
+    static Date fromDayNumber(int dayNumber);
 };

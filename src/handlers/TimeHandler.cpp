@@ -1,18 +1,14 @@
-
-
 #include "../headers/TimeHandler.h"
 
-using namespace std;
-
-
 TimeHandler::TimeHandler(TimeConfig conf)
-:conf(conf),
-currentDate(conf.startDate)
+    : conf(conf),
+      currentDate(conf.startDate),
+      currentDay(currentDate.toDayNumber())
 {
-
-
 }
 
-void TimeHandler::nextDay(){
+void TimeHandler::nextDay()
+{
     currentDate.nextDay();
+    currentDay++;
 }
